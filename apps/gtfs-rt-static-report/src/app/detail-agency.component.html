@@ -20,7 +20,11 @@
                 <span>Name</span>
                 <ng-container *ngTemplateOutlet="sortIcon; context: { column: 'name' }"></ng-container>
               </th>
-              <th class="left-thick" scope="col col-sortable" (click)="onSortClick('keyA')" style="width: 200px">
+              <th class="left-thick" scope="col col-sortable" (click)="onSortClick('keyA')" style="width: 200px"
+                [attr.aria-label]="realtimeTripsTooltip"
+                (mouseenter)="showRealtimeTripsTooltip($event)"
+                (mousemove)="moveRealtimeTripsTooltip($event)"
+                (mouseleave)="hideRealtimeTripsTooltip()">
                 {{ this.model.keyA }}
                 <ng-container *ngTemplateOutlet="sortIcon; context: { column: 'keyA' }"></ng-container>
                 <br/> GTFS-RT / -static</th>
@@ -90,8 +94,12 @@
   </footer>
 </div>
 
+<div *ngIf="tooltip.visible" class="mouse-tooltip" role="tooltip"
+  [style.left.px]="tooltip.x" [style.top.px]="tooltip.y">
+  {{ realtimeTripsTooltip }}
+</div>
+
 <ng-template #sortIcon let-column="column">
   <span *ngIf="this.model.sort.column === column && this.model.sort.direction === 'asc'">▲</span>
   <span *ngIf="this.model.sort.column === column && this.model.sort.direction === 'desc'">▼</span>
 </ng-template>
-

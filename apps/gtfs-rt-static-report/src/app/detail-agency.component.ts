@@ -62,6 +62,13 @@ type MapDaysData = Record<HrReportKey, Record<string, MapAgencyReportData>>;
   styleUrls: ['./detail-agency.component.scss']
 })
 export class DetailAgencyComponent implements OnInit {
+  public readonly realtimeTripsTooltip = 'Fahrten mit Echtzeitmeldungen / Erwartete Fahrten gemäss GTFS-Static (letzte Stunde)';
+  public tooltip = {
+    visible: false,
+    x: 0,
+    y: 0,
+  };
+
   private mapGTFS_Agency: Record<string, Record<string, AgencyJSON>>;
   private mapDaysData: MapDaysData;
   public model: PageModel;
@@ -338,6 +345,20 @@ export class DetailAgencyComponent implements OnInit {
 
   public onCompareValueChange() {
     this.updatePageModel();
+  }
+
+  public showRealtimeTripsTooltip(event: MouseEvent) {
+    this.tooltip.visible = true;
+    this.moveRealtimeTripsTooltip(event);
+  }
+
+  public moveRealtimeTripsTooltip(event: MouseEvent) {
+    this.tooltip.x = event.clientX + 12;
+    this.tooltip.y = event.clientY + 12;
+  }
+
+  public hideRealtimeTripsTooltip() {
+    this.tooltip.visible = false;
   }
 
   public onSortClick(column: SortColumn) {
