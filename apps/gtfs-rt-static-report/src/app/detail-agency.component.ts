@@ -56,13 +56,21 @@ interface MapAgencyReportData {
 };
 type MapDaysData = Record<HrReportKey, Record<string, MapAgencyReportData>>;
 
+type TooltipColumnType = 'col3' | 'col4' | 'col5' | 'col6';
+
 @Component({
   selector: 'app-detail-agency',
   templateUrl: './detail-agency.component.html',
   styleUrls: ['./detail-agency.component.scss']
 })
 export class DetailAgencyComponent implements OnInit {
-  public readonly realtimeTripsTooltip = 'Fahrten mit Echtzeitmeldungen / Erwartete Fahrten gemäss GTFS-Static (letzte Stunde)';
+  public readonly mapColumnTooltip: Record<TooltipColumnType, string> = {
+    'col3': 'Fahrten mit Echtzeitmeldungen / Erwartete Fahrten gemäss GTFS-Static (letzte Stunde)',
+    'col4': 'Fahrten mit Echtzeitmeldungen / Erwartete Fahrten gemäss GTFS-Static (gewählte Stunde am Vergleichstag)',
+    'col5': 'Fahrten mit Echtzeitmeldungen (letzte Stunde) - Fahrten mit Echtzeitmeldungen (gewählte Stunde am Vergleichstag)',
+    'col6': 'Differenz zwischen (Delta Echtzeit/Static (letzte Stunde)) und (Delta Echtzeit/Static (gewählte Stunde am Vergleichstag))',
+  };
+  public tooltipText = '';
   public tooltip = {
     visible: false,
     x: 0,
@@ -347,14 +355,16 @@ export class DetailAgencyComponent implements OnInit {
     this.updatePageModel();
   }
 
-  public showRealtimeTripsTooltip(event: MouseEvent) {
+  public showRealtimeTripsTooltip(event: MouseEvent, tooltipColumnType: TooltipColumnType) {
     this.tooltip.visible = true;
-    this.moveRealtimeTripsTooltip(event);
+    this.moveRealtimeTripsTooltip(event, tooltipColumnType);
   }
 
-  public moveRealtimeTripsTooltip(event: MouseEvent) {
+  public moveRealtimeTripsTooltip(event: MouseEvent, tooltipColumnType: TooltipColumnType) {
     this.tooltip.x = event.clientX + 12;
     this.tooltip.y = event.clientY + 12;
+
+    this.tooltipText = this.mapColumnTooltip[tooltipColumnType];
   }
 
   public hideRealtimeTripsTooltip() {
