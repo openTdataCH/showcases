@@ -20,11 +20,19 @@
                 <span>Name</span>
                 <ng-container *ngTemplateOutlet="sortIcon; context: { column: 'name' }"></ng-container>
               </th>
-              <th class="left-thick" scope="col col-sortable" (click)="onSortClick('keyA')" style="width: 200px">
+              <th class="left-thick" scope="col col-sortable" (click)="onSortClick('keyA')" style="width: 200px"
+                [attr.aria-label]="tooltipText"
+                (mouseenter)="showRealtimeTripsTooltip($event, 'col3')"
+                (mousemove)="moveRealtimeTripsTooltip($event, 'col3')"
+                (mouseleave)="hideRealtimeTripsTooltip()">
                 {{ this.model.keyA }}
                 <ng-container *ngTemplateOutlet="sortIcon; context: { column: 'keyA' }"></ng-container>
                 <br/> GTFS-RT / -static</th>
-              <th scope="col" style="width: 200px" class="left-thick">
+              <th scope="col" style="width: 200px" class="left-thick"
+                [attr.aria-label]="tooltipText"
+                (mouseenter)="showRealtimeTripsTooltip($event, 'col4')"
+                (mousemove)="moveRealtimeTripsTooltip($event, 'col4')"
+                (mouseleave)="hideRealtimeTripsTooltip()">
                 <select 
                   class="form-select form-control form-control-sm" 
                   [(ngModel)]="this.model.prevKeyB" 
@@ -33,11 +41,19 @@
                 </select>
                 GTFS-RT / -static
               </th>
-              <th class="left-thick" scope="col col-sortable" (click)="onSortClick('rt-diff')">
+              <th class="left-thick" scope="col col-sortable" (click)="onSortClick('rt-diff')"
+                [attr.aria-label]="tooltipText"
+                (mouseenter)="showRealtimeTripsTooltip($event, 'col5')"
+                (mousemove)="moveRealtimeTripsTooltip($event, 'col5')"
+                (mouseleave)="hideRealtimeTripsTooltip()">
                 <span title="RT_active - RT_active_PREV">GTFS-RT diff</span>
                 <ng-container *ngTemplateOutlet="sortIcon; context: { column: 'rt-diff' }"></ng-container>
               </th>
-              <th class="left-thick" scope="col col-sortable" (click)="onSortClick('delta-diff')">
+              <th class="left-thick" scope="col col-sortable" (click)="onSortClick('delta-diff')"
+                [attr.aria-label]="tooltipText"
+                (mouseenter)="showRealtimeTripsTooltip($event, 'col6')"
+                (mousemove)="moveRealtimeTripsTooltip($event, 'col6')"
+                (mouseleave)="hideRealtimeTripsTooltip()">
                 <span title="ABS((static_active - RT_active) - (static_active_PREV - RT_active_PREV))">Delta diff</span>
                 <ng-container *ngTemplateOutlet="sortIcon; context: { column: 'delta-diff' }"></ng-container>
               </th>
@@ -90,8 +106,12 @@
   </footer>
 </div>
 
+<div *ngIf="tooltip.visible" class="mouse-tooltip" role="tooltip"
+  [style.left.px]="tooltip.x" [style.top.px]="tooltip.y">
+  {{ tooltipText }}
+</div>
+
 <ng-template #sortIcon let-column="column">
   <span *ngIf="this.model.sort.column === column && this.model.sort.direction === 'asc'">▲</span>
   <span *ngIf="this.model.sort.column === column && this.model.sort.direction === 'desc'">▼</span>
 </ng-template>
-

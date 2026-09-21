@@ -49,7 +49,9 @@
           <tbody>
             <ng-container *ngFor="let dayCell of this.model.dayCells; index as dayIdx">
               <tr class="align-middle" [ngClass]="{'week-separator': dayCell.isSunday}" [attr.id]="'row-' + dayCell.dayF">
-                <th class="sticky-col col-freeze-separator" scope="row">{{ dayCell.dateF }}</th>
+                <th class="sticky-col col-freeze-separator" scope="row"
+                  [class.weekend]="dayCell.isWeekend"
+                  >{{ dayCell.dateF }}</th>
                 
                 <ng-container *ngFor="let reportCell of this.model.hourlyReportCells[dayIdx]; index as hrIdx">
 
