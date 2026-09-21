@@ -42,14 +42,15 @@ table.report {
 // all cells
 .table > :not(caption) > * > * {
     min-width: $cell-min-w;
-    height: $cell-h;
     border: 1px solid rgba(0,0,0,.1);
 }
 
-.details .table > :not(caption) > * > * {
-    min-width: $cell-min-w;
-    height: 40px;
-    border: 1px solid rgba(0,0,0,.1);
+.table > :not(caption) > * > th {
+    height: $cell-h;
+}
+
+.table > :not(caption) > * > th.weekend {
+    height: 1px;
 }
 
 // Separators, override border

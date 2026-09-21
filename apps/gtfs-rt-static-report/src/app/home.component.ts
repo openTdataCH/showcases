@@ -18,7 +18,8 @@ interface DayCell {
   date: Date,
   dayF: string,
   dateF: string,
-  isSunday: boolean
+  isSunday: boolean,
+  isWeekend: boolean,
 }
 
 interface HourCell {
@@ -241,11 +242,17 @@ export class HomeComponent {
           currentDayF = currentDayFParts[0] + ' ' + currentDayFParts[2] + '.' + currentDayFParts[1].replace(',', '');
           const isSunday = currentDayFParts[0] === 'Sun';
 
+          const isWeekend = ['Sat', 'Sun'].includes(currentDayFParts[0]);
+          if (isWeekend) {
+            currentDayF = '';
+          }
+
           return {
             date: currentDayDate,
             dayF: reportYM + '-' + dayF,
             dateF: currentDayF,
             isSunday: isSunday,
+            isWeekend: isWeekend,
           }
         })();
 
@@ -267,6 +274,10 @@ export class HomeComponent {
           }
 
           const hasData: boolean = (() => {
+            if (dayCell.isWeekend) {
+              return false;
+            }
+
             const reportCellDateS = reportYM + '-' + dayF + ' ' + hourCell.hourF + ':00:00';
             const reportCellDate = new Date(reportCellDateS);
 
