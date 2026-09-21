@@ -23,7 +23,7 @@ export class HTTP_Service {
   }
 
   async fetchBusinessOrganisationsCSV(): Promise<string> {
-    const url = 'https://opentdatach.github.io/data/business-organisations/full-business-organisation_LATEST.csv';
+    const url = 'https://opentdatach.github.io/data/business-organisation-v2/full-business-organisation_LATEST.csv';
 
     const params = new HttpParams()
       .set('rand', Date.now().toString());
@@ -33,7 +33,7 @@ export class HTTP_Service {
   }
 
   async fetchAtlasLinieCSV(): Promise<string> {
-    const url = 'https://opentdatach.github.io/data/slnid-line-actual-date/actual-date-line_LATEST.csv';
+    const url = 'https://opentdatach.github.io/data/line-v2/actual-date-line_LATEST.csv';
 
     const params = new HttpParams()
       .set('rand', Date.now().toString());
