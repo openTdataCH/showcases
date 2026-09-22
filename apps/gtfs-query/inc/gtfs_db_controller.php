@@ -185,11 +185,11 @@ class GTFS_DB_Controller {
         return $result_json;
     }
 
-    private function query_db_trips($sql_fields, $service_day, $filter_agency_ids, $from_hhmm = null, $to_hhmm = null, $parse_db_row_type = null) {
+    private function query_db_trips($sql_fields_s, $service_day, $filter_agency_ids, $from_hhmm = null, $to_hhmm = null, $parse_db_row_type = null) {
         $sql_path = $this->map_sql_queries['query_day_trips'];
         $sql = file_get_contents($sql_path);
 
-        $sql = str_replace('[SQL_FIELDS]', $sql_fields, $sql);
+        $sql = str_replace('[SQL_FIELDS]', $sql_fields_s, $sql);
 
         $sql_where_items = array();
         
