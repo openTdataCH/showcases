@@ -4,7 +4,7 @@ ojp_gtfs_dbs_path: "[APP_PATH]/data/gtfs-static-dbs"
 gtfs_dbs_catalog_path: "[APP_PATH]/data/gtfs-static-dbs/gtfs-static-dbs.json"
 
 # https://opentransportdata.swiss/en/dataset/business-organisations
-business_organisation_latest_path: "[APP_PATH]/data/opentransportdata.swiss/business-organisations/actual-date-business-organisation_LATEST.csv"
+business_organisation_latest_path: "[APP_PATH]/data/opentransportdata.swiss/business-organisation-v2/actual-date-business-organisation_LATEST.csv"
 
 map_sql_queries:
     # select
