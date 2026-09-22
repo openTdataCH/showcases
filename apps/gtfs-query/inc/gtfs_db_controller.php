@@ -109,25 +109,43 @@ class GTFS_DB_Controller {
     }
 
     public function query_day_from_to_trips($day, $filter_agency_ids_s, $from_hhmm, $to_hhmm) {
-        $sql_fields = file_get_contents($this->map_sql_queries['fields_query_day_full_trips']);
-
-        $result_json = $this->_query_day_trips($sql_fields, $day, $filter_agency_ids_s, $from_hhmm, $to_hhmm);
+        $result_json = $this->_query_day_trips('query_day_full_trips', $day, $filter_agency_ids_s, $from_hhmm, $to_hhmm);
         
         return $result_json;
     }
 
-    public function query_day_trips($day, $filter_agency_ids_s) {
-        $sql_fields = file_get_contents($this->map_sql_queries['fields_query_day_light_trips']);
-
-        $result_json = $this->_query_day_trips($sql_fields, $day, $filter_agency_ids_s);
+    public function query_day_trips($day, $filter_agency_ids_s, $fields_key) {
+        $result_json = $this->_query_day_trips($fields_key, $day, $filter_agency_ids_s);
         
         return $result_json;
     }
 
-    private function _query_day_trips($sql_fields, $day, $filter_agency_ids_s, $from_hhmm = null, $to_hhmm = null, $parse_db_row_type = 'FLAT') {
+    private function _parse_fields_from_array($sql_fields) {
+        foreach ($sql_fields as $key => $value) {
+            $sql_fields[$key] = rtrim($value, " ,");
+        }
+        $sql_fields_s = implode(', ', $sql_fields);
+
+        return $sql_fields_s;
+    }
+
+    private function _query_day_trips($sql_fields_profile, $day, $filter_agency_ids_s, $from_hhmm = null, $to_hhmm = null) {
+        $sql_query_config = $this->sql_builder_config['sql_builder'];
+        if (!array_key_exists($sql_fields_profile, $sql_query_config)) {
+            die('cant handle query_day_trips ' . $sql_fields_profile);
+        }
+
+        $parse_db_row_type = 'FLAT';
+
+        $sql_fields = $sql_query_config[$sql_fields_profile]['fields'];
+
+        $sql_fields_s = $this->_parse_fields_from_array($sql_fields);
+
         $cache_filename_parts = array(
             'query_day_trips_' . $this->cache_prefix,
+            'profile_' . $sql_fields_profile,
             'day_' . $day,
+            'db_row_type_' . $parse_db_row_type,
         );
         
         if ($from_hhmm !== null) {
@@ -153,7 +171,7 @@ class GTFS_DB_Controller {
             $db_rows = json_decode($db_rows_s, TRUE);
             $data_source = 'cache: ' . $cache_filename;
         } else {
-            $db_rows = $this->query_db_trips($sql_fields, $day, $filter_agency_ids, $from_hhmm, $to_hhmm, $parse_db_row_type);
+            $db_rows = $this->query_db_trips($sql_fields_s, $day, $filter_agency_ids, $from_hhmm, $to_hhmm, $parse_db_row_type);
             file_put_contents($cache_path, json_encode($db_rows));
             $data_source = 'DB';
         }
