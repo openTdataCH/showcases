@@ -48,3 +48,12 @@ sql_builder:
   query_trips:
     <<: *query_trips_base
     limit: 1000
+
+  query_day_full_trips: 
+    <<: *query_trips_base
+  
+  query_day_light_trips:
+    <<: *query_trips_base
+    fields:
+      - trips.trip_id,
+      - routes.route_id
