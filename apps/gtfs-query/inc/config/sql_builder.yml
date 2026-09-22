@@ -57,3 +57,10 @@ sql_builder:
     fields:
       - trips.trip_id,
       - routes.route_id
+
+  query_day_trips_timeline:
+    <<: *query_trips_base
+    fields:
+      - trips.trip_id,
+      - trips.departure_day_minutes,
+      - trips.arrival_day_minutes
