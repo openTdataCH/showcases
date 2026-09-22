@@ -13,9 +13,9 @@ map_sql_queries:
     # where
     where_from_to_trips: "[APP_PATH]/inc/sql/gtfs/where/where_from_to_trips.sql"
     where_day_bits_day_idx: "[APP_PATH]/inc/sql/gtfs/where/where_day_bits_day_idx.sql"
-    # fields
-    fields_query_day_full_trips: "[APP_PATH]/inc/sql/gtfs/fields/query_day_full_trips.sql"
-    fields_query_day_light_trips: "[APP_PATH]/inc/sql/gtfs/fields/query_day_light_trips.sql"
+    # fields - not anymore used - @see sql_builder_path instead
+    # fields_query_day_full_trips: "[APP_PATH]/inc/sql/gtfs/fields/query_day_full_trips.sql"
+    # fields_query_day_light_trips: "[APP_PATH]/inc/sql/gtfs/fields/query_day_light_trips.sql"
 
 sql_builder_path: "[APP_PATH]/inc/config/sql_builder.yml"
 
