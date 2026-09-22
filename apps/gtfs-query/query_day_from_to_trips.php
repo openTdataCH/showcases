@@ -15,7 +15,7 @@ $to_hhmm = @$_GET['to_hhmm'] ?: date('Hi');
 $filter_agency_ids_s = @$_GET['filter_agency_ids'] ?: 'HAS_GTFS_RT';
 
 $gtfs_controller = new GTFS_DB_Controller(APP_CONFIG, $gtfs_day);
-$result_json = $gtfs_controller->query_day_from_to_trips($day, $filter_agency_ids_s, $from_hhmm, $to_hhmm);
+$result_json = $gtfs_controller->query_day_trips('query_day_full_trips', $day, $filter_agency_ids_s, $from_hhmm, $to_hhmm);
 
 JsonView::dump($result_json);
 

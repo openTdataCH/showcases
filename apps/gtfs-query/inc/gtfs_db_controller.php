@@ -108,18 +108,6 @@ class GTFS_DB_Controller {
         return $gtfs_day;
     }
 
-    public function query_day_from_to_trips($day, $filter_agency_ids_s, $from_hhmm, $to_hhmm) {
-        $result_json = $this->_query_day_trips('query_day_full_trips', $day, $filter_agency_ids_s, $from_hhmm, $to_hhmm);
-        
-        return $result_json;
-    }
-
-    public function query_day_trips($day, $filter_agency_ids_s, $fields_key) {
-        $result_json = $this->_query_day_trips($fields_key, $day, $filter_agency_ids_s);
-        
-        return $result_json;
-    }
-
     private function _massage_sql_fields($sql_fields) {
         foreach ($sql_fields as $key => $value) {
             $sql_fields[$key] = rtrim($value, " ,");
@@ -128,7 +116,7 @@ class GTFS_DB_Controller {
         return $sql_fields;
     }
 
-    private function _query_day_trips($sql_fields_profile, $service_day, $filter_agency_ids_s, $from_hhmm = null, $to_hhmm = null) {
+    public function query_day_trips($sql_fields_profile, $service_day, $filter_agency_ids_s, $from_hhmm = null, $to_hhmm = null) {
         $sql_query_config = $this->sql_builder_config['sql_builder'];
         if (!array_key_exists($sql_fields_profile, $sql_query_config)) {
             die('cant handle query_day_trips ' . $sql_fields_profile);
