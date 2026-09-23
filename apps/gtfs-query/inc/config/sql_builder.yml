@@ -64,3 +64,4 @@ sql_builder:
       - trips.trip_id,
       - trips.departure_day_minutes,
       - trips.arrival_day_minutes
+      - routes.rowid
