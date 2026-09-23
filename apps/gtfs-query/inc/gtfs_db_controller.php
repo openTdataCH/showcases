@@ -178,6 +178,7 @@ class GTFS_DB_Controller {
             'metadata' => array(
                 'data_source' => $data_source,
                 'rows_no' => count($db_rows),
+                'columns' => $this->_massage_sql_fields($query_config['fields']),
             ),
             'rows' => $db_rows,
         );
