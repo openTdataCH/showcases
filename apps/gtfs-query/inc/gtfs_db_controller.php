@@ -47,7 +47,7 @@ class GTFS_DB_Controller {
 
         $this->use_cache = TRUE;
 
-        $this->cache_prefix = 'v2_' . $gtfs_db_day;
+        $this->cache_prefix = 'v3_' . $gtfs_db_day;
 
         $sql_builder_config_path = $config['sql_builder_path'];
         $this->sql_builder_config = ConfigHelpers::loadConfigAtPath($sql_builder_config_path);
