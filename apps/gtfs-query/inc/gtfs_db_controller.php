@@ -173,14 +173,17 @@ class GTFS_DB_Controller {
             $data_source = 'DB';
         }
 
-        $debug_sql = APP_PROFILE === 'dev' ? $sql : '';
-
         $result_json = array(
-            'data_source' => $data_source,
-            'rows_no' => count($db_rows),
-            'debug_sql' => $debug_sql,
+            'metadata' => array(
+                'data_source' => $data_source,
+                'rows_no' => count($db_rows),
+            ),
             'rows' => $db_rows,
         );
+
+        if (APP_PROFILE === 'dev') {
+            $result_json['metadata']['sql'] = $sql;
+        }
 
         return $result_json;
     }
