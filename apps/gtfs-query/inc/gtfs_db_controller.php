@@ -328,7 +328,7 @@ class GTFS_DB_Controller {
     }
 
     private function fetch_table_rows($table_name, $filter = null) {
-        $sql = "SELECT * FROM $table_name";
+        $sql = "SELECT rowid, * FROM $table_name";
         if ($filter) {
             $sql .= " WHERE " . $filter;
         }
