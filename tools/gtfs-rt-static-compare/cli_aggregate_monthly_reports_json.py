@@ -281,9 +281,12 @@ def _analyse_last_report(map_reports: dict[str, GTFS_RT_Static_Report_Metadata],
     
     if report_compare.compare_type == 'w_p':
         error_message = f'ERROR - DROP detected in number of GTFS-RT items'
-        
-    if report.tripNOK_NOJP_no > 0:
-        error_message = f'ERROR - GTFS-RT / -static is out of sync, discovered {report.tripNOK_NOJP_no} items not in GTFS-static'
+
+    # temp turn off notifications until a proper fix for cases when we have tripUpdate for trips from next day(s)
+    #   - check the TripUpdate.startDate if is different than today
+    #   - if yes, compare against that day (not current day)
+    # if report.tripNOK_NOJP_no > 0:
+    #     error_message = f'ERROR - GTFS-RT / -static is out of sync, discovered {report.tripNOK_NOJP_no} items not in GTFS-static'
         
     if abs(report.gtfs_rt_age) > 60:
         error_message = f'ERROR - GTFS-RT age is greater than 60 seconds: {report.gtfs_rt_age}'
