@@ -3,9 +3,9 @@ current_package_ids:
   hrdf: timetable-54-2026-hrdf
 
 csv_latest_data:  
-  # https://data.opentransportdata.swiss/en/dataset/business-organisations
-  business-organisations:
-    info_url: https://data.opentransportdata.swiss/en/dataset/business-organisations
+  # https://data.opentransportdata.swiss/en/dataset/business-organisation-v2
+  business-organisation-v2:
+    info_url: https://data.opentransportdata.swiss/en/dataset/business-organisation-v2
     example: actual_date_business_organisation_versions_2025-01-17.csv
     file_prefix: 
       - actual-date-business-organisation

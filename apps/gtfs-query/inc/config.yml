@@ -4,18 +4,14 @@ ojp_gtfs_dbs_path: "[APP_PATH]/data/gtfs-static-dbs"
 gtfs_dbs_catalog_path: "[APP_PATH]/data/gtfs-static-dbs/gtfs-static-dbs.json"
 
 # https://opentransportdata.swiss/en/dataset/business-organisations
-business_organisation_latest_path: "[APP_PATH]/data/opentransportdata.swiss/business-organisations/actual-date-business-organisation_LATEST.csv"
+business_organisation_latest_path: "[APP_PATH]/data/opentransportdata.swiss/business-organisation-v2/actual-date-business-organisation_LATEST.csv"
 
 map_sql_queries:
     # select
-    query_day_trips: "[APP_PATH]/inc/sql/gtfs/query_day_trips.sql"
     query_routes_representative_trip: "[APP_PATH]/inc/sql/gtfs/query_routes_representative_trip.sql"
     # where
     where_from_to_trips: "[APP_PATH]/inc/sql/gtfs/where/where_from_to_trips.sql"
     where_day_bits_day_idx: "[APP_PATH]/inc/sql/gtfs/where/where_day_bits_day_idx.sql"
-    # fields
-    fields_query_day_full_trips: "[APP_PATH]/inc/sql/gtfs/fields/query_day_full_trips.sql"
-    fields_query_day_light_trips: "[APP_PATH]/inc/sql/gtfs/fields/query_day_light_trips.sql"
 
 sql_builder_path: "[APP_PATH]/inc/config/sql_builder.yml"
 

@@ -11,8 +11,8 @@ sql_builder:
       - "1=1"
     tables:
       - routes
-  
-  query_trips:
+
+  query_trips_base: &query_trips_base
     fields:
       - trips.trip_id
       - trips.trip_short_name
@@ -38,8 +38,30 @@ sql_builder:
       - calendar
       - routes
       - agency
+      - link_agency
     where:
       - trips.service_id = calendar.service_id 
       - trips.route_id = routes.route_id
       - routes.agency_id = agency.agency_id
+      - routes.agency_id = link_agency.agency_id
+  
+  query_trips:
+    <<: *query_trips_base
     limit: 1000
+
+  query_day_full_trips: 
+    <<: *query_trips_base
+  
+  query_day_light_trips:
+    <<: *query_trips_base
+    fields:
+      - trips.trip_id,
+      - routes.route_id
+
+  query_day_trips_timeline:
+    <<: *query_trips_base
+    fields:
+      - trips.trip_id,
+      - trips.departure_day_minutes,
+      - trips.arrival_day_minutes
+      - routes.rowid
