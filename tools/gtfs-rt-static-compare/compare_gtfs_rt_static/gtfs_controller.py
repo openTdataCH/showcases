@@ -4,7 +4,7 @@ from pathlib import Path
 
 from typing import TypedDict, Union
 
-from datetime import datetime
+from datetime import datetime, date
 
 import gzip
 import shutil
@@ -46,8 +46,8 @@ class GTFS_Controller:
     def load_gtfs_db(self, gtfs_catalog_item: GTFS_Static_Catalog_Item):
         return self._load_gtfs_db(gtfs_catalog_item)
     
-    def compare_gtfs_rt_from_file(self, gtfs_rt_response: GTFS_RT_Response, gtfs_rt_file_dt: datetime, gtfs_rt_path: Path, gtfs_catalog_item: GTFS_Static_Catalog_Item, day_data_trips: DayTripData):
-        self._compare_gtfs_rt_from_file(gtfs_rt_response, gtfs_rt_file_dt, gtfs_rt_path, gtfs_catalog_item, day_data_trips)
+    def compare_gtfs_rt_from_file(self, gtfs_rt_response: GTFS_RT_Response, gtfs_rt_file_dt: datetime, gtfs_rt_path: Path, gtfs_catalog_item: GTFS_Static_Catalog_Item, map_day_data_trips: dict[str, DayTripData]):
+        self._compare_gtfs_rt_from_file(gtfs_rt_response, gtfs_rt_file_dt, gtfs_rt_path, gtfs_catalog_item, map_day_data_trips)
         
     def compute_gtfs_db_dt(self, dt: datetime):
         return self._compute_gtfs_db_catalog_item(dt)
@@ -87,21 +87,17 @@ class GTFS_Controller:
         log_message(f'... LOAD DB GTFS-DAY: {gtfs_catalog_item.gtfs_day} - {gtfs_catalog_item.db_relative_path}')
             
         gtfs_db = self._load_gtfs_db(gtfs_catalog_item)
-        if gtfs_db is None:
-            print('WHOOPS - no DB')
-            print(gtfs_catalog_item)
-            sys.exit(1)
         
         log_message(f'... DONE LOAD DB')
         print(header_separator_s)
 
-        day_data_trips = gtfs_db.compute_day_data(fetch_dt.date())
+        map_day_data_trips = self.compute_day_data_by_start_date(gtfs_db, gtfs_rt_response, fetch_dt.date())
         
         report = self._compare_file_gtfs_rt_static(
             fetch_dt,  
             gtfs_rt_snapshot_path, gtfs_rt_response, 
             gtfs_catalog_item, 
-            day_data_trips,
+            map_day_data_trips,
         )
         
         print()
@@ -152,12 +148,34 @@ class GTFS_Controller:
 
         return gtfs_db
     
-    def _compare_gtfs_rt_from_file(self, gtfs_rt_response: GTFS_RT_Response, gtfs_rt_file_dt: datetime, gtfs_rt_path: Path, gtfs_catalog_item: GTFS_Static_Catalog_Item, day_data_trips: DayTripData):
+    def _compare_gtfs_rt_from_file(self, gtfs_rt_response: GTFS_RT_Response, gtfs_rt_file_dt: datetime, gtfs_rt_path: Path, gtfs_catalog_item: GTFS_Static_Catalog_Item, map_day_data_trips: dict[str, DayTripData]):
         self._compare_file_gtfs_rt_static(
             gtfs_rt_file_dt, gtfs_rt_path, gtfs_rt_response,
             gtfs_catalog_item,
-            day_data_trips,
+            map_day_data_trips,
         )
+
+    @staticmethod
+    def parse_trip_start_date(start_date: str) -> date:
+        try:
+            return datetime.strptime(start_date, '%Y%m%d').date()
+        except (TypeError, ValueError) as error:
+            raise ValueError(
+                f"Invalid GTFS-RT trip startDate {start_date!r}; expected YYYYMMDD"
+            ) from error
+
+    def compute_day_data_by_start_date(self, gtfs_db: GTFS_DB, gtfs_rt_response: GTFS_RT_Response, fallback_date: date) -> dict[str, DayTripData]:
+        start_dates = {fallback_date}
+        for entity in gtfs_rt_response.entity:
+            start_dates.add(self.parse_trip_start_date(entity.tripUpdate.trip.startDate))
+
+        day_data_by_start_date: dict[str, DayTripData] = {}
+        for start_date in start_dates:
+            start_date_key = start_date.isoformat()
+            day_data = gtfs_db.compute_day_data(start_date)
+            day_data_by_start_date[start_date_key] = day_data
+
+        return day_data_by_start_date
         
     def _compute_gtfs_db_catalog_item(self, dt: datetime) -> Union[GTFS_Static_Catalog_Item, None]:
         found_gtfs_db_item: Union[GTFS_Static_Catalog_Item, None] = None
@@ -216,11 +234,13 @@ class GTFS_Controller:
     def _compare_file_gtfs_rt_static(self, 
             report_dt: datetime, gtfs_rt_path: Path, gtfs_rt_response: GTFS_RT_Response, 
             gtfs_catalog_item: GTFS_Static_Catalog_Item,
-            day_data_trips: DayTripData,
+            map_day_data_trips: dict[str, DayTripData],
         ):
         gtfs_rt_dt = datetime.fromtimestamp(gtfs_rt_response.header.timestamp)
 
-        gtfs_active_trips_data = self._compute_gtfs_active_trips_data(day_data_trips, for_dt=report_dt)
+        report_day_key = report_dt.date().isoformat()
+        report_day_data_trips = map_day_data_trips[report_day_key]
+        gtfs_active_trips_data = self._compute_gtfs_active_trips_data(report_day_data_trips, for_dt=report_dt)
         
         gtfs_static_day = gtfs_catalog_item.gtfs_day
         gtfs_rt_age = round(gtfs_rt_dt.timestamp() - report_dt.timestamp())
@@ -266,6 +286,11 @@ class GTFS_Controller:
             
             trip_id = entity.tripUpdate.trip.tripId
             route_id = entity.tripUpdate.trip.routeId
+
+            trip_start_date = self.parse_trip_start_date(
+                entity.tripUpdate.trip.startDate,
+            )
+            day_data_trips = map_day_data_trips[trip_start_date.isoformat()]
             
             # is the trip in the GTFS day trips?
             trip_OK = trip_id in day_data_trips['map_trips']
