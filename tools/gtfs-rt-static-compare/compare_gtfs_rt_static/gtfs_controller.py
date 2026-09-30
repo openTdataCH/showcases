@@ -79,8 +79,10 @@ class GTFS_Controller:
         
         gtfs_catalog_item = self.gtfs_dbs_report.lookup_by_feed_verson(gtfs_rt_response.header.feedVersion)
         if gtfs_catalog_item is None:
-            print('WHOOPS - cant find a GTFS catalog item')
-            sys.exit(1)
+            raise ValueError(
+                f"Cannot find a GTFS-static database catalog item for "
+                f"GTFS-RT feedVersion {gtfs_rt_response.header.feedVersion!r}"
+            )
             
         log_message(f'... LOAD DB GTFS-DAY: {gtfs_catalog_item.gtfs_day} - {gtfs_catalog_item.db_relative_path}')
             
@@ -141,9 +143,9 @@ class GTFS_Controller:
         gtfs_db_path = Path(f'{gtfs_dbs_basepath}/{gtfs_catalog_item.db_relative_path}')
             
         if not os.path.isfile(gtfs_db_path):
-            print('WHOOPS - cant find DB at path')
-            print(gtfs_db_path)
-            return None
+            raise FileNotFoundError(
+                f'Cannot find GTFS-static database at {gtfs_db_path}'
+            )
         
         gtfs_db = GTFS_DB(db_path=gtfs_db_path, map_resource_paths=self.app_config['resource_paths'])
         gtfs_db.init_lookups()
