@@ -96,27 +96,28 @@ def main():
             if gtfs_day not in map_gtfs_dbs:
                 log_message(f'... loading GTFS DB for {gtfs_day}')
                 gtfs_db = gtfs_controller.load_gtfs_db(gtfs_catalog_item)
-                if gtfs_db is None:
-                    print(gtfs_catalog_item)
-                    raise ValueError(f'cant load DB {gtfs_day} for known catalog item')
-                
                 map_gtfs_dbs[gtfs_day] = gtfs_db
             # 
             gtfs_db = map_gtfs_dbs[gtfs_day]
 
-            day_data_key = f'{gtfs_day}-{file_day_f}'
-            if day_data_key not in map_day_data_trips:
-                log_message(f'... loading GTFS day trips for DB:{gtfs_day} in day:{file_day_f}')
-                file_day = datetime.strptime(file_day_f, '%Y-%m-%d').date()
-                day_data_trips = gtfs_db.compute_day_data(file_day)
-                map_day_data_trips[day_data_key] = day_data_trips
-            #
-            day_data_trips = map_day_data_trips[day_data_key]
+            file_day = datetime.strptime(file_day_f, '%Y-%m-%d').date()
+            start_dates = {file_day}
+            for entity in gtfs_rt_response.entity:
+                start_dates.add(gtfs_controller.parse_trip_start_date(entity.tripUpdate.trip.startDate))
+
+            file_map_day_data_trips: dict[str, DayTripData] = {}
+            for start_date in start_dates:
+                start_date_f = start_date.isoformat()
+                day_data_key = f'{gtfs_day}-{start_date_f}'
+                if day_data_key not in map_day_data_trips:
+                    log_message(f'... loading GTFS day trips for DB:{gtfs_day} in day:{start_date_f}')
+                    map_day_data_trips[day_data_key] = gtfs_db.compute_day_data(start_date)
+                file_map_day_data_trips[start_date_f] = map_day_data_trips[day_data_key]
 
             gtfs_controller.compare_gtfs_rt_from_file(
                 gtfs_rt_response, file_dt, gtfs_rt_file_path, 
                 gtfs_catalog_item, 
-                day_data_trips,
+                file_map_day_data_trips,
             )
         # loop files
         log_message('... done day')

@@ -97,7 +97,7 @@ class GTFS_DB:
     def compute_day_data(self, day: date) -> DayTripData:
         db_day_f = format_day(self.gtfs_day)
         gtfs_day_f = format_day(day)
-        data_cache_filename = f'trip_day_data__db_{db_day_f}__day_{gtfs_day_f}.json'
+        data_cache_filename = f'trip_day_data__v2__db_{db_day_f}__day_{gtfs_day_f}.json'
         data_cache_path = Path(f'{self._gtfs_static_query_cache_path}/{data_cache_filename}')
         if data_cache_path.exists():
             data_json = json_helpers.load_json_from_file(data_cache_path)
