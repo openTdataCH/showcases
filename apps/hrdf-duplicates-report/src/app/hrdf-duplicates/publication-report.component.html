@@ -1,6 +1,6 @@
 <div>
   <ul>
-    <li>Last update: 11.May 2026</li>
+    <li>Last code update: 7.October 2026</li>
     <li>
       Source code:
       <a
@@ -68,6 +68,13 @@
       </div>
     </div>
 
+    <div class="alert alert-info" role="status"
+      *ngIf="this.renderModel.selectedAgency.shownGroupCount < this.renderModel.selectedAgency.totalGroupCount">
+      Showing {{ this.renderModel.selectedAgency.shownGroupCount | number }} of
+      {{ this.renderModel.selectedAgency.totalGroupCount | number }} duplicate groups.
+      This report includes a limited number of groups per agency.
+    </div>
+
     <hr class="mb-2" />
 
     <div class="row mb-2">
@@ -121,29 +128,6 @@
                           <th>FPLAN</th>
                           <td class="fplan_content" *ngFor="let trip of groupData.duplicateTrips">
                             <pre>{{ trip.tripMetaCell }}</pre>
-                          </td>
-                        </tr>
-                        <tr>
-                          <th>Stop Times</th>
-                          <td *ngFor="let trip of groupData.duplicateTrips">
-                            <table class="table table-bordered table-striped table-hover">
-                              <thead>
-                                <tr>
-                                  <th scope="col">#</th>
-                                  <th scope="col">Stop</th>
-                                  <th scope="col">Arr</th>
-                                  <th scope="col">Dep</th>
-                                </tr>
-                              </thead>
-                              <tbody>
-                                <tr *ngFor="let stopTime of trip.stopTimes; let idx = index">
-                                  <td>{{ idx + 1 }}</td>
-                                  <td>{{ stopTime.stopF }}</td>
-                                  <td>{{ stopTime.arrF }}</td>
-                                  <td>{{ stopTime.depF }}</td>
-                                </tr>
-                              </tbody>
-                            </table>
                           </td>
                         </tr>
                         <tr>

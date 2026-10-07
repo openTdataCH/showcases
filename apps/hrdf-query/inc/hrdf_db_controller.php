@@ -110,8 +110,21 @@ class HRDF_DB_Controller {
         $resource_files = scandir($resources_folder_path);
         foreach($resource_files as $resource_file) {
             $resource_matched = preg_match($resource_config['filename_regexp'], $resource_file, $resource_file_matches);
-            if ($resource_matched === 0) {
+            if ($resource_matched !== 1) {
                 continue;
+            }
+
+            $resource_path = $resources_folder_path . '/' . $resource_file;
+            if (!is_file($resource_path) || !is_readable($resource_path)) {
+                continue;
+            }
+
+            if (strtolower(pathinfo($resource_file, PATHINFO_EXTENSION)) === 'json') {
+                $resource_size = filesize($resource_path);
+                // discard 0, none files
+                if (!$resource_size) {
+                    continue;
+                }
             }
 
             $resource_item = array(

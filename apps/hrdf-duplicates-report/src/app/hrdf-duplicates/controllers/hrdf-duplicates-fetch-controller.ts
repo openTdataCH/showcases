@@ -107,6 +107,7 @@ export default class HRDF_DuplicatesFetchController {
         agency: agency,
         sortKey: sort_key,
         tripsData: agencyTripsData,
+        totalGroupCount: reportData.agency_total_group_counts?.[agency_id] ?? agencyTripsData.length,
       };
 
       duplicatesReport.agenciesData.push(agency_data);

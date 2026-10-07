@@ -1,10 +1,10 @@
 map_sql_queries:
-  hrdf_select_trips: [APP_PATH]/inc/sql/hrdf_select_trips.sql
+  hrdf_select_trips_light: "[APP_PATH]/inc/sql/hrdf_select_trips_light.sql"
 
 report_paths:
-  hrdf_duplicates_report_path: [APP_PATH]/data/hrdf-duplicates-reports/hrdf_duplicates_report_[HRDF_YMD].json
-  duplicate_days_json_path: [APP_PATH]/tmp/hrdf_duplicates_list.json
-  consolidate_hrdf_duplicates_report_path: [APP_PATH]/data/hrdf-duplicates-reports-csv/hrdf_duplicates_report.[AGENCY_ID].csv
+  hrdf_duplicates_report_path: "[APP_PATH]/data/hrdf-duplicates-reports/hrdf_duplicates_report_[HRDF_YMD].json"
+  duplicate_days_json_path: "[APP_PATH]/tmp/hrdf_duplicates_list.json"
+  consolidate_hrdf_duplicates_report_path: "[APP_PATH]/data/hrdf-duplicates-reports-csv/hrdf_duplicates_report.[AGENCY_ID].csv"
 
 report_urls:
   duplicate_days: https://tools.opentransportdata.swiss/hrdf-query/hrdf_duplicates_list.json

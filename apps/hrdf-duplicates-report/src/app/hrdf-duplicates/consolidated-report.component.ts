@@ -109,17 +109,15 @@ export class ConsolidatedReportComponent implements OnInit {
   private fetchDuplicatesConsolidatedReport(completion: (duplicateRows: DuplicateCSVRow[]) => void) {
     this.httpService.gerHRDF_DuplicatesConsolidatedReport().subscribe(data => {
 
-      const csvRows = data.split("\n");
+      const csvRows = this.parseCSV(data);
       const duplicateCSVRows: DuplicateCSVRow[] = [];
       let headerRows: string[] = []
       csvRows.forEach((csvRow, idx) => {
-        csvRow = csvRow.trim();
-
         if (idx === 0) {
-          headerRows = csvRow.split(',');
+          headerRows = csvRow;
         } else {
           const mapRowValues: Record<string, any> = {};
-          csvRow.split(',').forEach((val, idx) => {
+          csvRow.forEach((val, idx) => {
             mapRowValues[headerRows[idx]] = val;
           });
 
@@ -130,6 +128,51 @@ export class ConsolidatedReportComponent implements OnInit {
 
       completion(duplicateCSVRows);
     });
+  }
+
+  private parseCSV(data: string): string[][] {
+    const rows: string[][] = [];
+    let row: string[] = [];
+    let field = '';
+    let inQuotes = false;
+    const csv = data.replace(/^\uFEFF/, '');
+
+    for (let idx = 0; idx < csv.length; idx++) {
+      const character = csv[idx];
+
+      if (character === '"') {
+        if (inQuotes && csv[idx + 1] === '"') {
+          // CSV escapes a literal quote by doubling it inside a quoted field.
+          field += '"';
+          idx++;
+        } else {
+          inQuotes = !inQuotes;
+        }
+      } else if (!inQuotes && character === ',') {
+        row.push(field);
+        field = '';
+      } else if (!inQuotes && (character === '\r' || character === '\n')) {
+        // Ignore blank lines without stripping whitespace from field values.
+        if (row.length > 0 || field.length > 0) {
+          row.push(field);
+          rows.push(row);
+        }
+        row = [];
+        field = '';
+        if (character === '\r' && csv[idx + 1] === '\n') {
+          idx++;
+        }
+      } else {
+        field += character;
+      }
+    }
+
+    if (row.length > 0 || field.length > 0) {
+      row.push(field);
+      rows.push(row);
+    }
+
+    return rows;
   }
 
   private formatHRDF_Day(hrdfDay: string) {
