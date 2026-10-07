@@ -104,23 +104,29 @@ class HRDF_Check_Duplicates_Controller:
 
             agency_data = {}
             
-            for duplicate_key, hrdf_trips in map_duplicate_trips.items():
+            for duplicate_key, hrdf_db_trips in map_duplicate_trips.items():
                 hrdf_lookup_keys = []
-                for hrdf_trip in hrdf_trips:
-                    calendar_service_id = hrdf_trip.service.service_id
+                for hrdf_db_trip in hrdf_db_trips:
+                    service_id = hrdf_db_trip['service_id']
 
                     # include also service_id (for *A VE cases)
-                    hrdf_lookup_key = f'{hrdf_trip.fplan_row_idx}.{calendar_service_id}'
+                    fplan_row_idx = hrdf_db_trip['fplan_row_idx']
+                    hrdf_lookup_key = f'{fplan_row_idx}.{service_id}'
                     hrdf_lookup_keys.append(hrdf_lookup_key)
 
-                    map_hrdf_duplicates_errors['map_hrdf_trips'][hrdf_lookup_key] = hrdf_trip.as_json()
+                    map_hrdf_duplicates_errors['map_hrdf_trips'][hrdf_lookup_key] = dict(hrdf_db_trip)
 
-                    if calendar_service_id not in map_hrdf_duplicates_errors['service_data']:
-                        map_hrdf_duplicates_errors['service_data'][calendar_service_id] = hrdf_trip.service.pretty_print()
+                    if service_id not in map_hrdf_duplicates_errors['service_data']:
+                        calendar_db_row: sqlite3.Row = self.hrdf_db_lookups['calendar'][service_id]
+                        calendar_db = GTFS_Calendar.init_from_db_row(calendar_db_row)
+                        map_hrdf_duplicates_errors['service_data'][service_id] = calendar_db.pretty_print()
+                # loop trips
 
                 agency_data[duplicate_key] = hrdf_lookup_keys
+            # duplicate groups
 
             map_hrdf_duplicates_errors['agency_data'][agency_id] = agency_data
+        # loop agency
 
         return map_hrdf_duplicates_errors
 
@@ -139,47 +145,53 @@ class HRDF_Check_Duplicates_Controller:
 
         return agency_ids
 
-    def _compute_duplicate_trips_for_agency(self, agency_id):
+    def _compute_duplicate_trips_for_agency(self, agency_id) -> MapFplanDbRow:
         map_duplicate_trips = self._query_duplicate_trips_for_agency_id(agency_id)
         if map_duplicate_trips == {}:
             return {}
 
-        keep_map_duplicate_trips = {}
-        for duplicate_key, hrdf_trips_data in map_duplicate_trips.items():
-            hrdf_trips: List[HRDF_Trip_Variant] = hrdf_trips_data
-
-            merged_service: GTFS_Calendar = None
+        keep_map_duplicate_trips: MapFplanDbRow = {}
+        for duplicate_key, trip_db_rows in map_duplicate_trips.items():
+            merged_day_bits: Optional[str] = None
             has_overlaps = False
 
             map_fplan_row_indices = {}
             
-            for hrdf_trip in hrdf_trips:
-                if merged_service is None:
-                    merged_service = copy.copy(hrdf_trip.service)
+            for trip_db_row in trip_db_rows:
+                service_id = trip_db_row['service_id']
+                calendar_db_row: CalendarDbRow = self.hrdf_db_lookups['calendar'][service_id]
+                day_bits = calendar_db_row['day_bits']
+
+                if merged_day_bits is None:
+                    merged_day_bits = f'{day_bits}'
                     continue
 
-                if merged_service.has_overlaps(hrdf_trip.service):
+                if GTFS_Calendar.has_calendar_overlaps(merged_day_bits, day_bits):
                     has_overlaps = True
 
-                merged_service = merged_service.merge(hrdf_trip.service)
+                merged_day_bits = GTFS_Calendar.merge_calendar_day_bits(merged_day_bits, day_bits)
 
-                map_fplan_row_indices[hrdf_trip.fplan_row_idx] = 1
+                map_fplan_row_indices[trip_db_row['fplan_row_idx']] = 1
+            # loop
 
-            # Check for same FPLAN entry (same fplan_row_idx) but 2 different variants (*A VE)
+            # Discard variants (*A VE) of the same FPLAN entry: they describe
+            # one source trip, rather than separate duplicate trips.
             fplan_row_indices = list(map_fplan_row_indices.keys())
             if len(fplan_row_indices) == 1:
                 continue
             
             if not has_overlaps:
+                # Trips on disjoint service days never run on the same day,
+                # so sharing a duplicate key does not make them duplicates.
                 continue
 
-            keep_map_duplicate_trips[duplicate_key] = hrdf_trips_data
+            keep_map_duplicate_trips[duplicate_key] = trip_db_rows
 
         map_duplicate_trips = keep_map_duplicate_trips
 
         return map_duplicate_trips
 
-    def _query_duplicate_trips_for_agency_id(self, agency_id):
+    def _query_duplicate_trips_for_agency_id(self, agency_id) -> MapFplanDbRow:
         hrdf_trips_sql = load_resource_from_bundle(self.map_sql_queries, 'hrdf_select_trips_light')
 
         where_parts = [
@@ -192,18 +204,13 @@ class HRDF_Check_Duplicates_Controller:
         hrdf_cursor = self.hrdf_db.cursor()
         hrdf_cursor.execute(hrdf_trips_sql)
 
-        map_duplicate_trips = {}
-        for hrdf_trip_db_row in hrdf_cursor:
-            hrdf_trip = HRDF_Trip_Variant.init_from_db_row(hrdf_trip_db_row, 
-                self.hrdf_db_lookups['calendar'], self.hrdf_db_lookups['agency'], self.hrdf_db_lookups['stops']
-            )
-            
-            if not hrdf_trip:
-                continue
+        map_duplicates: MapFplanDbRow = {}
+        for db_row in hrdf_cursor:
+            hrdf_trip_db_row: FplanDbRow = db_row
 
-            duplicate_key = hrdf_trip.fplan_trip_id
+            duplicate_key = hrdf_trip_db_row['fplan_trip_id']
             if agency_id == '801':
-                irn_rows = hrdf_trip.compute_property_rows('*I RN')
+                irn_rows = HRDF_Trip_Variant.compute_property_rows_for_fplan_content('*I RN', hrdf_trip_db_row['fplan_content'])
                 if len(irn_rows) == 1:
                     extra_key = irn_rows[0][29:38]
                     duplicate_key = f'{duplicate_key}-{extra_key}'
@@ -211,19 +218,20 @@ class HRDF_Check_Duplicates_Controller:
                     print('WHOOPS - expected 1 *I RN row')
                     sys.exit()
 
-            if duplicate_key not in map_duplicate_trips:
-                map_duplicate_trips[duplicate_key] = []
+            if duplicate_key not in map_duplicates:
+                map_duplicates[duplicate_key] = []
 
-            map_duplicate_trips[duplicate_key].append(hrdf_trip)
+            map_duplicates[duplicate_key].append(hrdf_trip_db_row)
 
         hrdf_cursor.close()
 
-        # Keep only the duplicates (more than 1 trip per group)
-        keep_map_duplicate_trips = {}
-        for duplicate_key, hrdf_trips in map_duplicate_trips.items():
-            if len(hrdf_trips) > 1:
-                keep_map_duplicate_trips[duplicate_key] = hrdf_trips
+        # Discard groups with only one trip: a duplicate requires at least
+        # two trips sharing the same duplicate key.
+        keep_map_duplicates: MapFplanDbRow = {}
+        for duplicate_key, hrdf_db_trip_rows in map_duplicates.items():
+            if len(hrdf_db_trip_rows) > 1:
+                keep_map_duplicates[duplicate_key] = hrdf_db_trip_rows
         
-        map_duplicate_trips = keep_map_duplicate_trips
+        map_duplicates = keep_map_duplicates
 
-        return map_duplicate_trips
+        return map_duplicates
