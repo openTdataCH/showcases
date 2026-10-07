@@ -1,5 +1,4 @@
 map_sql_queries:
-  hrdf_select_trips: "[APP_PATH]/inc/sql/hrdf_select_trips.sql"
   hrdf_select_trips_light: "[APP_PATH]/inc/sql/hrdf_select_trips_light.sql"
 
 report_paths:
