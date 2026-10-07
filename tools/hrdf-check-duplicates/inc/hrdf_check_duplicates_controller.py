@@ -2,7 +2,7 @@ import os, sys
 import sqlite3
 import copy
 
-from typing import List
+from typing import Any, List, Optional, TypedDict
 
 from pathlib import Path
 
