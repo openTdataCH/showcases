@@ -1,7 +1,7 @@
 import os, sys
 import sqlite3
 
-from typing import List, Optional, TypedDict
+from typing import Dict, List, Optional, TypedDict
 
 from pathlib import Path
 
@@ -14,8 +14,6 @@ from .shared.inc.helpers.log_helpers import log_message
 from .shared.inc.helpers.json_helpers import export_json_to_file
 from .shared.inc.helpers.hrdf_helpers import compute_formatted_date_from_hrdf_db_path
 
-type MapFplanDbRow = dict[str, List[FplanDbRow]]
-
 class FplanDbRow(TypedDict):
     fplan_row_idx: int
     agency_id: str
@@ -24,6 +22,8 @@ class FplanDbRow(TypedDict):
     fplan_trip_id: str
     fplan_content: str
     service_id: str
+
+MapFplanDbRow = Dict[str, List[FplanDbRow]]
 
 class CalendarDbRow(TypedDict):
     service_id: str
