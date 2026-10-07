@@ -65,7 +65,7 @@ class HRDF_Check_Duplicates_Controller:
 
         map_hrdf_duplicates_agency_errors = self._check()
 
-        export_json_to_file(map_hrdf_duplicates_agency_errors, map_hrdf_duplicates_agency_errors_path, pretty_print=True)
+        export_json_to_file(map_hrdf_duplicates_agency_errors, Path(map_hrdf_duplicates_agency_errors_path), pretty_print=True)
         log_message(f'Saved report to {map_hrdf_duplicates_agency_errors_path}')
 
         log_message(f'DONE')
