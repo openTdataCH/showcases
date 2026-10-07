@@ -1,5 +1,6 @@
 map_sql_queries:
   hrdf_select_trips: "[APP_PATH]/inc/sql/hrdf_select_trips.sql"
+  hrdf_select_trips_light: "[APP_PATH]/inc/sql/hrdf_select_trips_light.sql"
 
 report_paths:
   hrdf_duplicates_report_path: "[APP_PATH]/data/hrdf-duplicates-reports/hrdf_duplicates_report_[HRDF_YMD].json"

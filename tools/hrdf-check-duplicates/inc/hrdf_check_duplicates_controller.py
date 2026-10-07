@@ -164,7 +164,7 @@ class HRDF_Check_Duplicates_Controller:
         return map_duplicate_trips
 
     def _query_duplicate_trips_for_agency_id(self, agency_id):
-        hrdf_trips_sql = load_resource_from_bundle(self.map_sql_queries, 'hrdf_select_trips')
+        hrdf_trips_sql = load_resource_from_bundle(self.map_sql_queries, 'hrdf_select_trips_light')
 
         where_parts = [
             f"AND fplan.agency_id = '{agency_id}'"
