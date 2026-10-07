@@ -68,6 +68,13 @@
       </div>
     </div>
 
+    <div class="alert alert-info" role="status"
+      *ngIf="this.renderModel.selectedAgency.shownGroupCount < this.renderModel.selectedAgency.totalGroupCount">
+      Showing {{ this.renderModel.selectedAgency.shownGroupCount | number }} of
+      {{ this.renderModel.selectedAgency.totalGroupCount | number }} duplicate groups.
+      This report includes a limited number of groups per agency.
+    </div>
+
     <hr class="mb-2" />
 
     <div class="row mb-2">

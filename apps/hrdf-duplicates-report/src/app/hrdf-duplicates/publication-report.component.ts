@@ -88,7 +88,7 @@ export class PublicationReportComponent implements OnInit {
     agencyData: HRDF_DuplicatesAgencyData
   ): string {
     const agency = agencyData.agency;
-    const hrdf_trips_count = agencyData.tripsData.length;
+    const hrdf_trips_count = agencyData.totalGroupCount;
 
     let name = agency.agency_code ?? '';
     name += ' (' + agency.agency_id + ')';
@@ -122,6 +122,8 @@ export class PublicationReportComponent implements OnInit {
 
     const selectedAgencyRenderModel: RenderModelSelectedAgencyData = {
       agencyId: agencyId,
+      shownGroupCount: agencyData.tripsData.length,
+      totalGroupCount: agencyData.totalGroupCount,
       // mapService: duplicatesReport.serviceData,
       vehiclesTypeData: [],
     };
