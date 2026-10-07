@@ -85,8 +85,10 @@ class HRDF_Check_Duplicates_Controller:
         return map_db_lookups
 
     def _check(self):
+        max_groups_per_agency = 100
         map_hrdf_duplicates_errors = {
             'agency_data': {},
+            'agency_total_group_counts': {},
             'service_data': {},
             'map_hrdf_trips': {}
         }
@@ -100,9 +102,15 @@ class HRDF_Check_Duplicates_Controller:
             if map_duplicate_trips == {}:
                 continue
 
+            map_hrdf_duplicates_errors['agency_total_group_counts'][agency_id] = len(map_duplicate_trips)
             agency_data = {}
             
             for duplicate_key, hrdf_db_trips in map_duplicate_trips.items():
+                # Limit report size before adding the group's trip and service data.
+                # Keep the full count separately so truncation does not hide its scale.
+                if len(agency_data) >= max_groups_per_agency:
+                    break
+
                 hrdf_lookup_keys = []
                 for hrdf_db_trip in hrdf_db_trips:
                     service_id = hrdf_db_trip['service_id']
