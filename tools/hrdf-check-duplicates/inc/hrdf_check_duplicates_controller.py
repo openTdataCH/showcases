@@ -124,11 +124,10 @@ class HRDF_Check_Duplicates_Controller:
 
         return map_hrdf_duplicates_errors
 
-    # We could have use agency table but not all agency items have FPLAN entries
     def _fetch_agency_ids(self):
         agency_ids = []
 
-        sql = 'SELECT DISTINCT agency_id FROM fplan'
+        sql = 'SELECT agency_id FROM agency WHERE in_fplan = 1;'
         db_cursor = self.hrdf_db.cursor()
         db_cursor.execute(sql)
 
