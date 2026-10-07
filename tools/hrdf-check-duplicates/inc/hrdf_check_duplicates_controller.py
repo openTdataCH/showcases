@@ -57,8 +57,7 @@ class HRDF_Check_Duplicates_Controller:
 
         file_ymd = compute_formatted_date_from_hrdf_db_path(self.hrdf_db_path)
         if file_ymd is None:
-            print(f'ERROR - cant read ymd from {self.hrdf_db_path.name}')
-            sys.exit()
+            raise ValueError(f'ERROR - cant read ymd from {self.hrdf_db_path.name}')
 
         map_hrdf_duplicates_agency_errors_path: str = self.report_paths['hrdf_duplicates_report_path']
         map_hrdf_duplicates_agency_errors_path = map_hrdf_duplicates_agency_errors_path.replace('[HRDF_YMD]', file_ymd)
@@ -214,8 +213,8 @@ class HRDF_Check_Duplicates_Controller:
                     extra_key = irn_rows[0][29:38]
                     duplicate_key = f'{duplicate_key}-{extra_key}'
                 else:
-                    print('WHOOPS - expected 1 *I RN row')
-                    sys.exit()
+                    row_idx = hrdf_trip_db_row['fplan_row_idx']
+                    raise ValueError(f'ERROR - row_idx:{row_idx} - expected 1 *I RN row, got {len(irn_rows)} instead')
 
             if duplicate_key not in map_duplicates:
                 map_duplicates[duplicate_key] = []
