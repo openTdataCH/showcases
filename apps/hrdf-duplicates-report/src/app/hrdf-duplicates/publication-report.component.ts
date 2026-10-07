@@ -276,9 +276,10 @@ export class PublicationReportComponent implements OnInit {
         }
       }
 
-      if (isDifferentVariant) {
-        fplan_content_row = '=> different variant ··· ' + fplan_content_row;
-      }
+      // TODO - remove prefix until we have a better viz
+      // if (isDifferentVariant) {
+      //   fplan_content_row = '=> different variant ··· ' + fplan_content_row;
+      // }
 
       const meta_row = fplan_content_row;
       fplan_content_meta_rows.push(meta_row);

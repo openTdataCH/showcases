@@ -124,29 +124,6 @@
                           </td>
                         </tr>
                         <tr>
-                          <th>Stop Times</th>
-                          <td *ngFor="let trip of groupData.duplicateTrips">
-                            <table class="table table-bordered table-striped table-hover">
-                              <thead>
-                                <tr>
-                                  <th scope="col">#</th>
-                                  <th scope="col">Stop</th>
-                                  <th scope="col">Arr</th>
-                                  <th scope="col">Dep</th>
-                                </tr>
-                              </thead>
-                              <tbody>
-                                <tr *ngFor="let stopTime of trip.stopTimes; let idx = index">
-                                  <td>{{ idx + 1 }}</td>
-                                  <td>{{ stopTime.stopF }}</td>
-                                  <td>{{ stopTime.arrF }}</td>
-                                  <td>{{ stopTime.depF }}</td>
-                                </tr>
-                              </tbody>
-                            </table>
-                          </td>
-                        </tr>
-                        <tr>
                           <th>Calendar</th>
                           <td class="fplan_content" *ngFor="let trip of groupData.duplicateTrips">
                             <pre>{{ trip.serviceCell }}</pre>
