@@ -121,8 +121,8 @@ class HRDF_DB_Controller {
 
             if (strtolower(pathinfo($resource_file, PATHINFO_EXTENSION)) === 'json') {
                 $resource_size = filesize($resource_path);
-                // discard 0, none or files > 100mb
-                if (!$resource_size || ($resource_size >= 100000000)) {
+                // discard 0, none files
+                if (!$resource_size) {
                     continue;
                 }
             }
