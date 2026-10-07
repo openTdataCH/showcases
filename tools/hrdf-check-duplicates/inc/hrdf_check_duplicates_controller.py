@@ -15,6 +15,23 @@ from .shared.inc.helpers.log_helpers import log_message
 from .shared.inc.helpers.json_helpers import export_json_to_file
 from .shared.inc.helpers.hrdf_helpers import compute_formatted_date_from_hrdf_db_path
 
+type MapFplanDbRow = dict[str, List[FplanDbRow]]
+
+class FplanDbRow(TypedDict):
+    fplan_row_idx: int
+    agency_id: str
+    vehicle_type: str
+    service_line: str
+    fplan_trip_id: str
+    fplan_content: str
+    service_id: str
+
+class CalendarDbRow(TypedDict):
+    service_id: str
+    start_date: str
+    end_date: str
+    day_bits: str
+
 class HRDF_Check_Duplicates_Controller:
     def __init__(self, app_config, hrdf_db_path: Path):
         log_message('HRDF_Check_Duplicates_Controller - START INIT')
