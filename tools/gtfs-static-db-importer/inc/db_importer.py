@@ -58,6 +58,7 @@ class GTFS_DB_Importer:
         self._update_trips()
         self._update_frequencies()
         self._update_routes()
+        self._update_agency_day_bits()
         self._update_routes_representative_trip()
         self._create_fts_routes()
         
@@ -539,6 +540,45 @@ class GTFS_DB_Importer:
         log_message(f"... DONE")
         print('')
         
+    def _update_agency_day_bits(self):
+        log_message('START update agency day_bits')
+
+        sql_path = self._map_sql_queries['select_agency_routes_day_bits']
+        sql = load_sql_from_file(sql_path)
+
+        db_temp_path = self._db_engine.get_db_tmp_path()
+        table_csv_path = Path(f'{db_temp_path}/agency_update_day_bits.csv')
+        table_csv_updater = CSV_Updater(table_csv_path, ['agency_id', 'day_bits'])
+
+        db_cursor = self._db_engine.get_cursor()
+        for db_row in db_cursor.execute(sql):
+            routes_day_bits_s = db_row['routes_day_bits']
+            if routes_day_bits_s is None:
+                continue
+
+            routes_day_bits = routes_day_bits_s.split(',')
+            agency_day_bits = ['0'] * len(routes_day_bits[0])
+            for route_day_bits in routes_day_bits:
+                for idx, day_bit in enumerate(route_day_bits):
+                    if day_bit == '1':
+                        agency_day_bits[idx] = '1'
+
+            agency_day_bits_s = ''.join(agency_day_bits)
+            row_dict = {
+                'agency_id': db_row['agency_id'],
+                'day_bits': agency_day_bits_s,
+            }
+            table_csv_updater.prepare_row(row_dict)
+
+        db_cursor.close()
+        table_csv_updater.close()
+
+        sql_template = 'UPDATE agency SET day_bits = :day_bits WHERE agency_id = :agency_id'
+        self._db_engine.update_table_from_csv(table_csv_path, sql_template)
+
+        log_message('DONE update agency day_bits')
+        print('')
+
     def _update_routes_representative_trip(self):
         '''
         - UPDATE routes SET representative_trip_id
