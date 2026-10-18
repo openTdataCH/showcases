@@ -26,6 +26,8 @@ class GTFS_DB_Importer:
     _gtfs_folder_path: Path
     _db_lock_path: Path
     _bo_realtime_csv_path: Path
+    _day_bits_start_date: datetime.datetime
+    _day_bits_end_date: datetime.datetime
 
     def __init__(self, app_config, gtfs_folder_path: Path, db_path: Path):
         self._map_sql_queries = app_config['map_sql_queries']
@@ -52,6 +54,7 @@ class GTFS_DB_Importer:
         self._write_lock_file()
 
         self._import_csv_tables()
+        self._resolve_day_bits_date_range()
         self._populate_agency_gtfs_rt()
         self._check_stops_parent_depth()
 
@@ -214,33 +217,13 @@ class GTFS_DB_Importer:
         table_csv_path = Path(f'{db_temp_path}/calendar_update_day_bits.csv')
         table_csv_updater = CSV_Updater(table_csv_path, ['service_id', 'day_bits', 'start_date', 'end_date'])
 
-        sql = 'SELECT MIN(start_date) AS min_date FROM calendar'
-        min_date_s = self._db_engine.query(sql)[0]['min_date']
-        sql = 'SELECT MAX(end_date) AS max_date FROM calendar'
-        max_date_s = self._db_engine.query(sql)[0]['max_date']
-        calendar_start_date = datetime.datetime.strptime(min_date_s, "%Y%m%d")
-        calendar_end_date = datetime.datetime.strptime(max_date_s, "%Y%m%d")
+        calendar_start_date = self._day_bits_start_date
+        calendar_end_date = self._day_bits_end_date
 
         log_message('CALENDAR DATES:')
 
-        MAX_DAYS_NO = 366
-
-        today_date = datetime.datetime.combine(datetime.datetime.today(), datetime.datetime.min.time())
-
-        today_start_date_diff = (today_date - calendar_start_date).days
-        if today_start_date_diff > MAX_DAYS_NO:
-            log_message(f'   ... too far back START - {calendar_start_date} - {today_start_date_diff} days to today')
-            calendar_start_date = today_date - datetime.timedelta(days=MAX_DAYS_NO)
-            log_message(f'   ... set to - {calendar_start_date}')
-
-        today_end_date_diff = (calendar_end_date - today_date).days
-        if today_end_date_diff > MAX_DAYS_NO:
-            log_message(f'   ... too far away END - {calendar_end_date} - {today_end_date_diff} days from today')
-            calendar_end_date = today_date + datetime.timedelta(days=MAX_DAYS_NO)
-            log_message(f'   ... set to - {calendar_end_date}')
-
         calendar_days_no = (calendar_end_date - calendar_start_date).days
-        calendar_weeks_no = math.ceil(calendar_days_no / 7)
+        calendar_weeks_no = math.ceil((calendar_days_no + 1) / 7)
         
         log_message(f'   START      : {calendar_start_date}')
         log_message(f'   END        : {calendar_end_date}')
@@ -303,7 +286,7 @@ class GTFS_DB_Importer:
             end_date = calendar_end_date
 
         days_no = (end_date - start_date).days
-        weeks_no = math.ceil(days_no / 7)
+        weeks_no = math.ceil((days_no + 1) / 7)
 
         map_weekdays_pattern = {}
         for calendar_day in calendar_days:
@@ -311,15 +294,21 @@ class GTFS_DB_Importer:
             is_enabled = int(calendar_db_row[day_key]) == 1
             map_weekdays_pattern[calendar_day] = is_enabled
 
-        day_bits_list = self._fill_day_bits_pattern(start_date, end_date, weeks_no, map_weekdays_pattern)
-        self._update_day_bits_from_calendar_dates(day_bits_list, calendar_db_row, start_date)
+        if start_date > end_date:
+            feed_days_no = (calendar_end_date - calendar_start_date).days + 1
+            day_bits = '0' * feed_days_no
+        else:
+            day_bits_list = self._fill_day_bits_pattern(start_date, end_date, weeks_no, map_weekdays_pattern)
+            day_bits = ''.join(day_bits_list)
 
+            days_no_before = (start_date - calendar_start_date).days
+            days_no_after = (calendar_end_date - end_date).days
+
+            day_bits = '0' * days_no_before + day_bits + '0' * days_no_after
+
+        day_bits_list = list(day_bits)
+        self._update_day_bits_from_calendar_dates(day_bits_list, calendar_db_row, calendar_start_date)
         day_bits = ''.join(day_bits_list)
-
-        days_no_before = (start_date - calendar_start_date).days
-        days_no_after = (calendar_end_date - end_date).days
-
-        day_bits = '0' * days_no_before + day_bits + '0' * days_no_after
 
         return day_bits
 
@@ -367,9 +356,11 @@ class GTFS_DB_Importer:
                 sys.exit()
 
             day_idx = (row_date-start_date).days
-            if day_idx < len(day_bits_list):
-                # this case happens when we have to cap the calendar to +1year
-                day_bits_list[day_idx] = day_bit
+            if day_idx < 0:
+                continue
+            if day_idx >= len(day_bits_list):
+                continue
+            day_bits_list[day_idx] = day_bit
 
     def _update_trips(self):
         '''
