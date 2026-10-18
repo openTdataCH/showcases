@@ -264,7 +264,10 @@ class SQLiteDBEngine:
         
         return csv_writer
 
-    def load_csv_into_table(self, table_name: str, csv_path: Path):
+    def load_csv_into_table(self, table_name: str, csv_path: Path, null_if_blank_columns: Optional[List[str]] = None):
+        if null_if_blank_columns is None:
+            null_if_blank_columns = []
+
         csv_file = open(csv_path, encoding='utf-8-sig')
         csv_reader = csv.DictReader(csv_file)
         
@@ -287,6 +290,10 @@ class SQLiteDBEngine:
             row_values = []
             for key in column_names:
                 field_value = csv_row.get(key, None)
+                if key in null_if_blank_columns:
+                    if field_value is not None:
+                        if field_value.strip() == '':
+                            field_value = None
                 row_values.append(field_value)
             batch_insert_values.append(row_values)
         # loop read csv rows
