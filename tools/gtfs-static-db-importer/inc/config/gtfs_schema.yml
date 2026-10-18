@@ -129,7 +129,8 @@ tables:
       - stop_lon REAL NOT NULL
       - stop_lat REAL NOT NULL
       - location_type TEXT
-      - parent_station TEXT CHECK (parent_station IS NULL OR LENGTH(TRIM(parent_station)) > 0)
+      - definition: parent_station TEXT CHECK (parent_station IS NULL OR LENGTH(TRIM(parent_station)) > 0)
+        null_if_blank: true
       - platform_code TEXT
       - original_stop_id TEXT
     indexes:
