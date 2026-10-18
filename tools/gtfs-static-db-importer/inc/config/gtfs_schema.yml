@@ -8,7 +8,6 @@ tables:
       - agency_timezone TEXT
       - agency_lang TEXT
       - agency_phone TEXT
-      - day_bits TEXT # similar with HRDF
 
   calendar:
     columns:
@@ -66,6 +65,7 @@ tables:
     columns:
       - agency_id TEXT PRIMARY KEY
       - has_gtfs_rt INTEGER
+      - day_bits TEXT # similar with HRDF
     indexes:
       - has_gtfs_rt
 
