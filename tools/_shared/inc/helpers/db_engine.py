@@ -21,6 +21,7 @@ class ColumnMetadataType(TypedDict):
     names: List[str]
     defs: List[str]
     indexes: List[str]
+    null_if_blank_columns: List[str]
 
 class SQLiteDBEngine:
     db_path: Path
@@ -106,6 +107,7 @@ class SQLiteDBEngine:
                 'names': self._fetch_table_columns_via_pragma(table_name),
                 'defs': [],
                 'indexes': [],
+                'null_if_blank_columns': [],
             }
             self.map_columns_metadata[table_name] = column_data
         cursor.close()
@@ -119,9 +121,23 @@ class SQLiteDBEngine:
             column_names = []
             column_defs = []
             column_indexes = []
+            null_if_blank_columns = []
             
             for column_def_row in table_config['columns']:
-                column_def_config = _sanitize_col_def(column_def_row)
+                null_if_blank = False
+                if isinstance(column_def_row, str):
+                    column_definition = column_def_row
+                elif isinstance(column_def_row, dict):
+                    column_definition = column_def_row.get('definition')
+                    if not isinstance(column_definition, str):
+                        raise ValueError(f'Expected a string definition for column in {table_name}: {column_def_row}')
+                    null_if_blank = column_def_row.get('null_if_blank', False)
+                    if not isinstance(null_if_blank, bool):
+                        raise ValueError(f'Expected a boolean null_if_blank for column in {table_name}: {column_def_row}')
+                else:
+                    raise ValueError(f'Expected a string or mapping for column in {table_name}: {column_def_row}')
+
+                column_def_config = _sanitize_col_def(column_definition)
                 
                 column_def_config_parts = column_def_config.split(' ')
                 if len(column_def_config_parts) == 1:
@@ -129,6 +145,9 @@ class SQLiteDBEngine:
                     raise ValueError(f'No column type defined for {column_def_row}')
                 
                 column_name = column_def_config_parts[0]
+
+                if null_if_blank:
+                    null_if_blank_columns.append(column_name)
                 
                 column_names.append(column_name)
                 column_defs.append(column_def_config)
@@ -150,6 +169,7 @@ class SQLiteDBEngine:
                 'names': column_names,
                 'defs': column_defs,
                 'indexes': column_indexes,
+                'null_if_blank_columns': null_if_blank_columns,
             }
         # loop tables config
     
@@ -264,9 +284,8 @@ class SQLiteDBEngine:
         
         return csv_writer
 
-    def load_csv_into_table(self, table_name: str, csv_path: Path, null_if_blank_columns: Optional[List[str]] = None):
-        if null_if_blank_columns is None:
-            null_if_blank_columns = []
+    def load_csv_into_table(self, table_name: str, csv_path: Path):
+        null_if_blank_columns = self.map_columns_metadata[table_name]['null_if_blank_columns']
 
         csv_file = open(csv_path, encoding='utf-8-sig')
         csv_reader = csv.DictReader(csv_file)
