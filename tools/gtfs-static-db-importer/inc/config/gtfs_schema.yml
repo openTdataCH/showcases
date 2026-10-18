@@ -8,6 +8,7 @@ tables:
       - agency_timezone TEXT
       - agency_lang TEXT
       - agency_phone TEXT
+      - day_bits TEXT # similar with HRDF
 
   calendar:
     columns:
