@@ -187,11 +187,7 @@ class GTFS_DB_Importer:
                     sys.exit()
             # endif check if file exists
 
-            null_if_blank_columns = []
-            if table_name == 'stops':
-                null_if_blank_columns = ['parent_station']
-
-            self._db_engine.load_csv_into_table(table_name, gtfs_file_path, null_if_blank_columns=null_if_blank_columns)
+            self._db_engine.load_csv_into_table(table_name, gtfs_file_path)
             self._db_engine.add_table_indexes(table_name)
         # loop table names
         print()
