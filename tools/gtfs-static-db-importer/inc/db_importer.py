@@ -541,13 +541,13 @@ class GTFS_DB_Importer:
         print('')
         
     def _update_agency_day_bits(self):
-        log_message('START update agency day_bits')
+        log_message('START update link_agency day_bits')
 
         sql_path = self._map_sql_queries['select_agency_routes_day_bits']
         sql = load_sql_from_file(sql_path)
 
         db_temp_path = self._db_engine.get_db_tmp_path()
-        table_csv_path = Path(f'{db_temp_path}/agency_update_day_bits.csv')
+        table_csv_path = Path(f'{db_temp_path}/link_agency_update_day_bits.csv')
         table_csv_updater = CSV_Updater(table_csv_path, ['agency_id', 'day_bits'])
 
         db_cursor = self._db_engine.get_cursor()
@@ -573,10 +573,10 @@ class GTFS_DB_Importer:
         db_cursor.close()
         table_csv_updater.close()
 
-        sql_template = 'UPDATE agency SET day_bits = :day_bits WHERE agency_id = :agency_id'
+        sql_template = 'UPDATE link_agency SET day_bits = :day_bits WHERE agency_id = :agency_id'
         self._db_engine.update_table_from_csv(table_csv_path, sql_template)
 
-        log_message('DONE update agency day_bits')
+        log_message('DONE update link_agency day_bits')
         print('')
 
     def _update_routes_representative_trip(self):
