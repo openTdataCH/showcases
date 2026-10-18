@@ -68,7 +68,6 @@ class HRDF_Consolidated_Duplicates_Report:
 
         # loop hrdf_day
 
-        # filter_agency_ids = ['11']
         filter_agency_ids = []
         
         self.compute_consolidated_report_for_agency(map_data, filter_agency_ids)

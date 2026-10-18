@@ -169,15 +169,29 @@ class Calendar:
 
     def has_overlaps(self, another_calendar_o):
         another_calendar: Calendar = another_calendar_o
+        found_overlaps = Calendar.has_calendar_overlaps(self.day_bits, another_calendar.day_bits)
 
-        if len(self.day_bits) != len(another_calendar.day_bits):
-            print('ERROR - the services are not equal size')
-            print(self.day_bits)
-            print(another_calendar.day_bits)
-            sys.exit(1)
+        return found_overlaps
 
-        b1 = bitarray(self.day_bits)
-        b2 = bitarray(another_calendar.day_bits)
+    def merge(self, another_calendar_o):
+        another_calendar: Calendar = another_calendar_o
+
+        b1_or_b2_s = Calendar.merge_calendar_day_bits(self.day_bits, another_calendar.day_bits)
+
+        new_sevice_id = f'{self.service_id} + {another_calendar.service_id}'
+        new_service = Calendar(new_sevice_id, self.start_date, self.end_date, b1_or_b2_s)
+
+        return new_service
+
+    @staticmethod
+    def has_calendar_overlaps(cal1_day_bits: str, cal2_day_bits: str) -> bool:
+        if len(cal1_day_bits) != len(cal2_day_bits):
+            print(cal1_day_bits)
+            print(cal2_day_bits)
+            raise ValueError('ERROR has_calendar_overlaps - the services are not equal size')
+
+        b1 = bitarray(cal1_day_bits)
+        b2 = bitarray(cal2_day_bits)
         b1_and_b2 = b1 & b2
 
         # https://en.wikipedia.org/wiki/Bitwise_operation#AND
@@ -189,11 +203,15 @@ class Calendar:
 
         return found_overlaps
 
-    def merge(self, another_calendar_o):
-        another_calendar: Calendar = another_calendar_o
+    @staticmethod
+    def merge_calendar_day_bits(cal1_day_bits: str, cal2_day_bits: str) -> str:
+        if len(cal1_day_bits) != len(cal2_day_bits):
+            print(cal1_day_bits)
+            print(cal2_day_bits)
+            raise ValueError('ERROR merge_calendar_day_bits - the services are not equal size')
 
-        b1 = bitarray(self.day_bits)
-        b2 = bitarray(another_calendar.day_bits)
+        b1 = bitarray(cal1_day_bits)
+        b2 = bitarray(cal2_day_bits)
         b1_or_b2 = b1 | b2
 
         # https://en.wikipedia.org/wiki/Bitwise_operation#OR
@@ -203,8 +221,5 @@ class Calendar:
 
         b1_or_b2_s = b1_or_b2.to01()
 
-        new_sevice_id = f'{self.service_id} + {another_calendar.service_id}'
-        
-        new_service = Calendar(new_sevice_id, self.start_date, self.end_date, b1_or_b2_s)
-
-        return new_service
+        return b1_or_b2_s
+    

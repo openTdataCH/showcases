@@ -14,6 +14,8 @@ export interface RenderModelAgencyData {
 
 export interface RenderModelSelectedAgencyData {
   agencyId: string;
+  shownGroupCount: number;
+  totalGroupCount: number;
   vehiclesTypeData: RenderModelVehicleTypeData[];
 }
 

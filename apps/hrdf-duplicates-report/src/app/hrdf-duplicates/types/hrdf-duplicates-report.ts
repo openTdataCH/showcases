@@ -10,6 +10,7 @@ export interface HRDF_DuplicatesAgencyData {
     agency: Agency
     sortKey: string
     tripsData: HRDF_DuplicateTripsData[]
+    totalGroupCount: number
 }
 
 export interface HRDF_DuplicateTripsData {

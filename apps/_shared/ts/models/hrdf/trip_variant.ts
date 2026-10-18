@@ -1,3 +1,4 @@
+import { HRDF_Stop_Time_DB } from "../../types/hrdf/stop_time_db";
 import { HRDF_Trip_Variant_DB } from "../../types/hrdf/trip_variant_db";
 
 import Agency from "../gtfs/agency";
@@ -52,7 +53,8 @@ export default class Trip_Variant {
         const toStop = mapStops[tripVariantDB.from_stop_id]
 
         const stopTimes: StopTime[] = [];
-        tripVariantDB.stops.forEach(stopTimeDB => {
+        const tripStops: HRDF_Stop_Time_DB[] = tripVariantDB.stops ?? [];
+        tripStops.forEach(stopTimeDB => {
             const stop = mapStops[stopTimeDB.stop_id]
             const stopTime = StopTime.initFromHRDFStopTimeDB(stopTimeDB, stop)
             stopTimes.push(stopTime);
