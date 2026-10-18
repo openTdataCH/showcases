@@ -53,6 +53,7 @@ class GTFS_DB_Importer:
 
         self._import_csv_tables()
         self._populate_agency_gtfs_rt()
+        self._check_stops_parent_depth()
 
         self._update_calendar()
         self._update_trips()
@@ -129,6 +130,27 @@ class GTFS_DB_Importer:
         log_message(f'... DONE')
         print()
     
+    def _check_stops_parent_depth(self):
+        log_message('START check stops parent depth')
+
+        sql_path = self._map_sql_queries['select_stops_exceeding_parent_depth']
+        sql = load_sql_from_file(sql_path)
+        db_cursor = self._db_engine.get_cursor()
+        db_cursor.execute(sql)
+        invalid_stop = db_cursor.fetchone()
+        db_cursor.close()
+
+        if invalid_stop is not None:
+            stop_id = invalid_stop['stop_id']
+            parent_stop_id = invalid_stop['parent_stop_id']
+            grandparent_stop_id = invalid_stop['grandparent_stop_id']
+            raise ValueError(
+                f'Stop hierarchy exceeds one parent level: '
+                f'{stop_id} -> {parent_stop_id} -> {grandparent_stop_id}'
+            )
+
+        log_message('DONE check stops parent depth')
+
     def _import_csv_tables(self):
         '''
         Batch TRUNCATE / INSERT csv rows from GTFS in db.
