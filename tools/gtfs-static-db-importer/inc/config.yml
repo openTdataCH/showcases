@@ -1,5 +1,6 @@
 map_sql_queries:
   select_stops_exceeding_parent_depth: "[APP_PATH]/inc/sql/select_stops_exceeding_parent_depth.sql"
+  select_stops_missing_parents: "[APP_PATH]/inc/sql/select_stops_missing_parents.sql"
   select_calendar_dates_group_by: "[APP_PATH]/inc/sql/select_calendar_dates_group_by.sql"
   select_stop_times_group_by: "[APP_PATH]/inc/sql/select_trips_group_by_stop_times.sql"
   select_trips_group_by_stop_times_frequencies: "[APP_PATH]/inc/sql/select_trips_group_by_stop_times_frequencies.sql"
