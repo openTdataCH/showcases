@@ -4,7 +4,7 @@ from pathlib import Path
 
 import math
 import yaml
-from typing import TypedDict, cast
+from typing import Optional, TypedDict, cast
 
 import calendar, datetime
 
@@ -23,6 +23,11 @@ class CalendarData(TypedDict):
     start_date: datetime.datetime
     end_date: datetime.datetime
     days_no: int
+
+class ParentStopRoutesDayBitsRow(TypedDict):
+    stop_id: str
+    day_bits: str
+    routes_day_bits: Optional[str]
 
 class GTFS_DB_Importer:
     _map_sql_queries: dict[str, str]
@@ -660,11 +665,12 @@ class GTFS_DB_Importer:
 
         db_cursor = self._db_engine.get_cursor()
         for db_row in db_cursor.execute(sql):
-            routes_day_bits_s = db_row['routes_day_bits']
+            parent_stop_row = cast(ParentStopRoutesDayBitsRow, db_row)
+            routes_day_bits_s = parent_stop_row['routes_day_bits']
             if routes_day_bits_s is None:
                 continue
 
-            stop_day_bits = list(db_row['day_bits'])
+            stop_day_bits = list(parent_stop_row['day_bits'])
             routes_day_bits = routes_day_bits_s.split(',')
             for route_day_bits in routes_day_bits:
                 for idx, day_bit in enumerate(route_day_bits):
@@ -673,7 +679,7 @@ class GTFS_DB_Importer:
 
             stop_day_bits_s = ''.join(stop_day_bits)
             row_dict = {
-                'stop_id': db_row['stop_id'],
+                'stop_id': parent_stop_row['stop_id'],
                 'day_bits': stop_day_bits_s,
             }
             table_csv_updater.prepare_row(row_dict)
