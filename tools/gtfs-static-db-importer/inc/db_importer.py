@@ -4,7 +4,7 @@ from pathlib import Path
 
 import math
 import yaml
-from typing import cast
+from typing import TypedDict, cast
 
 import calendar, datetime
 
@@ -18,6 +18,11 @@ from .shared.inc.helpers.gtfs_helpers import convert_datetime_to_day_minutes, ex
 from .shared.inc.helpers.log_helpers import log_message
 from .shared.inc.helpers.db_helpers import load_sql_from_file
 from .shared.inc.helpers.file_helpers import compute_file_rows_no
+
+class CalendarData(TypedDict):
+    start_date: datetime.datetime
+    end_date: datetime.datetime
+    days_no: int
 
 class GTFS_DB_Importer:
     _map_sql_queries: dict[str, str]
