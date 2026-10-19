@@ -159,6 +159,7 @@ class GTFS_DB_Importer:
             )
 
         log_message('DONE check stops parent depth')
+        print('')
 
     def _import_csv_tables(self):
         '''
@@ -277,7 +278,7 @@ class GTFS_DB_Importer:
         self._db_engine.update_table_from_csv(table_csv_updater.csv_path, sql_template)
 
         log_message('DONE update calendar')
-        print('')        
+        print('')
 
     def _compute_calendar_day_bits(self, calendar_db_row, calendar_days, calendar_start_date, calendar_end_date):
         start_date_s = calendar_db_row['start_date']
