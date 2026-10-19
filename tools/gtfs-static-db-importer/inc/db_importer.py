@@ -664,7 +664,12 @@ class GTFS_DB_Importer:
         table_csv_updater = CSV_Updater(table_csv_path, ['stop_id', 'day_bits'])
 
         db_cursor = self._db_engine.get_cursor()
+        row_id = 0
         for db_row in db_cursor.execute(sql):
+            if row_id % 10_000 == 0:
+                formatted_row_id = f'{row_id:,}'.replace(',', "'")
+                log_message(f'... parsed {formatted_row_id} parent stops')
+
             parent_stop_row = cast(ParentStopRoutesDayBitsRow, db_row)
             routes_day_bits_s = parent_stop_row['routes_day_bits']
             if routes_day_bits_s is None:
@@ -683,6 +688,9 @@ class GTFS_DB_Importer:
                 'day_bits': stop_day_bits_s,
             }
             table_csv_updater.prepare_row(row_dict)
+
+            row_id += 1
+        # loop
 
         db_cursor.close()
         table_csv_updater.close()
