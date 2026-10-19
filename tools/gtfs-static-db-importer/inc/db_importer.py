@@ -214,7 +214,8 @@ class GTFS_DB_Importer:
         log_message('START update calendar')
         
         rows_no = self._db_engine.count_rows_table('calendar')
-        log_message(f'... found {rows_no:,} rows in calendar')
+        formatted_rows_no = f'{rows_no:,}'.replace(',', "'")
+        log_message(f'... found {formatted_rows_no} rows in calendar')
         print()
 
         if rows_no == 0:
@@ -251,7 +252,8 @@ class GTFS_DB_Importer:
         row_id = 1
         for db_row in db_cursor.execute(sql):
             if row_id % 10000 == 0:
-                log_message(f'... parsed {row_id:,} rows')
+                formatted_row_id = f'{row_id:,}'.replace(',', "'")
+                log_message(f'... parsed {formatted_row_id} rows')
 
             service_id = db_row['service_id']
             day_bits = self._compute_calendar_day_bits(db_row, calendar_days, calendar_start_date, calendar_end_date)
@@ -272,7 +274,8 @@ class GTFS_DB_Importer:
 
         log_message(f'DB_Table_CSV_Updater: START UPDATE from CSV: {table_csv_path.name}')
         lines_no = compute_file_rows_no(table_csv_path) - 1
-        log_message(f'... found {lines_no:,} rows')
+        formatted_lines_no = f'{lines_no:,}'.replace(',', "'")
+        log_message(f'... found {formatted_lines_no} rows')
 
         sql_template = 'UPDATE calendar SET day_bits = :day_bits, start_date = :start_date, end_date = :end_date WHERE service_id = :service_id'
         self._db_engine.update_table_from_csv(table_csv_updater.csv_path, sql_template)
@@ -390,7 +393,8 @@ class GTFS_DB_Importer:
             map_stop_times_reset_table[time_type] = CSV_Updater(csv_path, column_names)
 
         rows_no = self._db_engine.count_rows_table(trips_table_name)
-        log_message(f'... found {rows_no:,} trips')
+        formatted_rows_no = f'{rows_no:,}'.replace(',', "'")
+        log_message(f'... found {formatted_rows_no} trips')
 
         sql_path = self._map_sql_queries['select_stop_times_group_by']
         sql = load_sql_from_file(sql_path)
@@ -401,7 +405,8 @@ class GTFS_DB_Importer:
         row_id = 1
         for db_row in db_cursor.execute(sql):
             if row_id % 200_000 == 0:
-                log_message(f'... parsed {row_id:,} rows')
+                formatted_row_id = f'{row_id:,}'.replace(',', "'")
+                log_message(f'... parsed {formatted_row_id} rows')
 
             stop_times_s = db_row['stop_times_data']
             stop_times = extract_stop_times_data_from_s(stop_times_s)
@@ -517,7 +522,8 @@ class GTFS_DB_Importer:
         row_id = 1
         for db_row in db_cursor.execute(sql):
             if row_id % 1000 == 0:
-                log_message(f'... parsed {row_id:,} rows')
+                formatted_row_id = f'{row_id:,}'.replace(',', "'")
+                log_message(f'... parsed {formatted_row_id} rows')
                 
             trips_day_bits_s: str = db_row['trips_day_bits']
             if trips_day_bits_s is None:
