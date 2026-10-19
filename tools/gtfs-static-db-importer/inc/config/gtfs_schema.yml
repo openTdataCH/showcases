@@ -43,8 +43,8 @@ tables:
       - feed_publisher_name TEXT NOT NULL
       - feed_publisher_url TEXT
       - feed_lang TEXT
-      - feed_start_date TEXT NOT NULL
-      - feed_end_date TEXT NOT NULL
+      - feed_start_date TEXT
+      - feed_end_date TEXT
       - feed_version TEXT NOT NULL
 
   frequencies:
