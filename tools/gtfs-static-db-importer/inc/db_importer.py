@@ -71,6 +71,7 @@ class GTFS_DB_Importer:
         self._write_lock_file()
 
         self._import_csv_tables()
+        
         self._resolve_day_bits_date_range()
         self._populate_agency_gtfs_rt()
         self._check_stops_parent_depth()
