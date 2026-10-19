@@ -67,6 +67,7 @@ class GTFS_DB_Importer:
         self._update_frequencies()
         self._update_routes()
         self._populate_parent_stops()
+        self._update_parent_stops_day_bits()
         self._update_agency_day_bits()
         self._update_routes_representative_trip()
         self._create_fts_routes()
@@ -637,6 +638,45 @@ class GTFS_DB_Importer:
         self._db_engine.add_table_indexes(table_name)
 
         log_message('DONE populate parent_stops')
+        print('')
+
+    def _update_parent_stops_day_bits(self):
+        log_message('START update parent_stops day_bits')
+
+        sql_path = self._map_sql_queries['select_parent_stop_routes_day_bits']
+        sql = load_sql_from_file(sql_path)
+
+        db_temp_path = self._db_engine.get_db_tmp_path()
+        table_csv_path = Path(f'{db_temp_path}/parent_stops_update_day_bits.csv')
+        table_csv_updater = CSV_Updater(table_csv_path, ['stop_id', 'day_bits'])
+
+        db_cursor = self._db_engine.get_cursor()
+        for db_row in db_cursor.execute(sql):
+            routes_day_bits_s = db_row['routes_day_bits']
+            if routes_day_bits_s is None:
+                continue
+
+            stop_day_bits = list(db_row['day_bits'])
+            routes_day_bits = routes_day_bits_s.split(',')
+            for route_day_bits in routes_day_bits:
+                for idx, day_bit in enumerate(route_day_bits):
+                    if day_bit == '1':
+                        stop_day_bits[idx] = '1'
+
+            stop_day_bits_s = ''.join(stop_day_bits)
+            row_dict = {
+                'stop_id': db_row['stop_id'],
+                'day_bits': stop_day_bits_s,
+            }
+            table_csv_updater.prepare_row(row_dict)
+
+        db_cursor.close()
+        table_csv_updater.close()
+
+        sql_template = 'UPDATE parent_stops SET day_bits = :day_bits WHERE stop_id = :stop_id'
+        self._db_engine.update_table_from_csv(table_csv_path, sql_template)
+
+        log_message('DONE update parent_stops day_bits')
         print('')
 
     def _update_agency_day_bits(self):
