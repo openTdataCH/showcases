@@ -54,6 +54,7 @@ class GTFS_DB_Importer:
             print('ERROR: lock path present, ABORT')
             print(f'ls -al {self._db_lock_path.parent}')
             sys.exit(1)
+        #
         
         self._write_lock_file()
 
