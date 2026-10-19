@@ -69,7 +69,7 @@ tables:
     indexes:
       - has_gtfs_rt
 
-  link_stops:
+  parent_stops:
     columns:
       - stop_id TEXT PRIMARY KEY
       - day_bits TEXT # similar with HRDF
