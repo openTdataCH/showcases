@@ -29,6 +29,9 @@ class ParentStopRoutesDayBitsRow(TypedDict):
     day_bits: str
     routes_day_bits: Optional[str]
 
+class ParentStopIdRow(TypedDict):
+    stop_id: str
+
 class StopMissingParentRow(TypedDict):
     stop_id: str
     parent_station: str
@@ -687,15 +690,25 @@ class GTFS_DB_Importer:
         table_csv_path = Path(f'{db_temp_path}/parent_stops_update_day_bits.csv')
         table_csv_updater = CSV_Updater(table_csv_path, ['stop_id', 'day_bits'])
 
+        parent_stops_cursor = self._db_engine.get_cursor()
         db_cursor = self._db_engine.get_cursor()
         row_id = 0
-        for db_row in db_cursor.execute(sql):
+        for parent_stop_db_row in parent_stops_cursor.execute('SELECT stop_id FROM parent_stops'):
             if row_id % 10_000 == 0:
                 formatted_row_id = f'{row_id:,}'.replace(',', "'")
                 log_message(f'... parsed {formatted_row_id} parent stops')
 
+            parent_stop_id_row = cast(ParentStopIdRow, parent_stop_db_row)
+            stop_id = parent_stop_id_row['stop_id']
+            db_cursor.execute(sql, {'stop_id': stop_id})
+            db_row = db_cursor.fetchone()
+
+            if db_row is None:
+                continue
+            
             parent_stop_row = cast(ParentStopRoutesDayBitsRow, db_row)
             routes_day_bits_s = parent_stop_row['routes_day_bits']
+            
             if routes_day_bits_s is None:
                 continue
 
@@ -716,6 +729,7 @@ class GTFS_DB_Importer:
             row_id += 1
         # loop
 
+        parent_stops_cursor.close()
         db_cursor.close()
         table_csv_updater.close()
 
