@@ -62,6 +62,7 @@ class GTFS_DB_Importer:
         self._update_trips()
         self._update_frequencies()
         self._update_routes()
+        self._populate_parent_stops()
         self._update_agency_day_bits()
         self._update_routes_representative_trip()
         self._create_fts_routes()
@@ -597,6 +598,36 @@ class GTFS_DB_Importer:
         self._day_bits_start_date = start_date
         self._day_bits_end_date = end_date
         log_message(f'Day bits range from {date_source}, with 366-day limits: {start_date:%Y%m%d} - {end_date:%Y%m%d}')
+
+    def _populate_parent_stops(self):
+        log_message('START populate parent_stops')
+
+        sql_path = self._map_sql_queries['select_parent_stops']
+        sql = load_sql_from_file(sql_path)
+
+        days_no = (self._day_bits_end_date - self._day_bits_start_date).days + 1
+
+        table_name = 'parent_stops'
+        table_csv_writer = self._db_engine.create_csv_writer(table_name)
+        empty_day_bits = '0' * days_no
+
+        db_cursor = self._db_engine.get_cursor()
+        for db_row in db_cursor.execute(sql):
+            row_dict = {
+                'stop_id': db_row['stop_id'],
+                'day_bits': empty_day_bits,
+            }
+            table_csv_writer.prepare_row(row_dict)
+
+        db_cursor.close()
+        table_csv_writer.close()
+
+        self._db_engine.drop_and_recreate_table(table_name)
+        self._db_engine.load_csv_into_table(table_name, table_csv_writer.csv_path)
+        self._db_engine.add_table_indexes(table_name)
+
+        log_message('DONE populate parent_stops')
+        print('')
 
     def _update_agency_day_bits(self):
         log_message('START update link_agency day_bits')
