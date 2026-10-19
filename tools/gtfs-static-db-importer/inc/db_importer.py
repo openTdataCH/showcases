@@ -29,6 +29,10 @@ class ParentStopRoutesDayBitsRow(TypedDict):
     day_bits: str
     routes_day_bits: Optional[str]
 
+class StopMissingParentRow(TypedDict):
+    stop_id: str
+    parent_station: str
+
 class GTFS_DB_Importer:
     _map_sql_queries: dict[str, str]
     _db_engine: SQLiteDBEngine
@@ -67,6 +71,7 @@ class GTFS_DB_Importer:
         self._resolve_day_bits_date_range()
         self._populate_agency_gtfs_rt()
         self._check_stops_parent_depth()
+        self._check_stops_missing_parents()
 
         self._update_calendar()
         self._update_trips()
@@ -165,6 +170,25 @@ class GTFS_DB_Importer:
             )
 
         log_message('DONE check stops parent depth')
+        print('')
+
+    def _check_stops_missing_parents(self):
+        log_message('START check stops missing parents')
+
+        sql_path = self._map_sql_queries['select_stops_missing_parents']
+        sql = load_sql_from_file(sql_path)
+        db_cursor = self._db_engine.get_cursor()
+        db_cursor.execute(sql)
+        db_row = db_cursor.fetchone()
+        db_cursor.close()
+
+        if db_row is not None:
+            invalid_stop = cast(StopMissingParentRow, db_row)
+            stop_id = invalid_stop['stop_id']
+            parent_station = invalid_stop['parent_station']
+            raise ValueError(f'Stop {stop_id} references missing parent stop {parent_station}')
+
+        log_message('DONE check stops missing parents')
         print('')
 
     def _import_csv_tables(self):
