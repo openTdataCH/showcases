@@ -31,8 +31,7 @@ class GTFS_DB_Importer:
     _gtfs_folder_path: Path
     _db_lock_path: Path
     _bo_realtime_csv_path: Path
-    _day_bits_start_date: datetime.datetime
-    _day_bits_end_date: datetime.datetime
+    _calendar_data: CalendarData
 
     def __init__(self, app_config, gtfs_folder_path: Path, db_path: Path):
         self._map_sql_queries = app_config['map_sql_queries']
@@ -223,17 +222,17 @@ class GTFS_DB_Importer:
         table_csv_path = Path(f'{db_temp_path}/calendar_update_day_bits.csv')
         table_csv_updater = CSV_Updater(table_csv_path, ['service_id', 'day_bits', 'start_date', 'end_date'])
 
-        calendar_start_date = self._day_bits_start_date
-        calendar_end_date = self._day_bits_end_date
+        calendar_start_date = self._calendar_data['start_date']
+        calendar_end_date = self._calendar_data['end_date']
 
         log_message('CALENDAR DATES:')
 
-        calendar_days_no = (calendar_end_date - calendar_start_date).days
-        calendar_weeks_no = math.ceil((calendar_days_no + 1) / 7)
+        calendar_days_no = self._calendar_data['days_no']
+        calendar_weeks_no = math.ceil(calendar_days_no / 7)
         
         log_message(f'   START      : {calendar_start_date}')
         log_message(f'   END        : {calendar_end_date}')
-        log_message(f'   DAYS NO    : {calendar_days_no + 1}')
+        log_message(f'   DAYS NO    : {calendar_days_no}')
         log_message(f'   WEEKS NO   : {calendar_weeks_no}')
         print('')
 
@@ -573,8 +572,7 @@ class GTFS_DB_Importer:
                     log_message('Invalid feed_info dates; deriving the day_bits range from calendar data')
                 else:
                     if start_date <= end_date:
-                        self._day_bits_start_date = start_date
-                        self._day_bits_end_date = end_date
+                        self._set_calendar_data(start_date, end_date)
                         log_message(f'Day bits range from feed_info: {start_date:%Y%m%d} - {end_date:%Y%m%d}')
                         return
 
@@ -600,9 +598,16 @@ class GTFS_DB_Importer:
         if end_date < start_date:
             raise ValueError('Calendar date range is empty after applying the 366-day limits')
 
-        self._day_bits_start_date = start_date
-        self._day_bits_end_date = end_date
+        self._set_calendar_data(start_date, end_date)
         log_message(f'Day bits range from {date_source}, with 366-day limits: {start_date:%Y%m%d} - {end_date:%Y%m%d}')
+
+    def _set_calendar_data(self, start_date: datetime.datetime, end_date: datetime.datetime):
+        days_no = (end_date - start_date).days + 1
+        self._calendar_data = {
+            'start_date': start_date,
+            'end_date': end_date,
+            'days_no': days_no,
+        }
 
     def _populate_parent_stops(self):
         log_message('START populate parent_stops')
@@ -610,7 +615,7 @@ class GTFS_DB_Importer:
         sql_path = self._map_sql_queries['select_parent_stops']
         sql = load_sql_from_file(sql_path)
 
-        days_no = (self._day_bits_end_date - self._day_bits_start_date).days + 1
+        days_no = self._calendar_data['days_no']
 
         table_name = 'parent_stops'
         table_csv_writer = self._db_engine.create_csv_writer(table_name)
