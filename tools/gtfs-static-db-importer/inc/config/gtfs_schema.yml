@@ -69,11 +69,6 @@ tables:
     indexes:
       - has_gtfs_rt
 
-  parent_stops:
-    columns:
-      - stop_id TEXT PRIMARY KEY
-      - day_bits TEXT # similar with HRDF
-
   routes:
     columns:
       - route_id TEXT PRIMARY KEY
@@ -121,6 +116,11 @@ tables:
     keys:
       - FOREIGN KEY (trip_id) REFERENCES trips(trip_id)
       - FOREIGN KEY (stop_id) REFERENCES stops(stop_id)
+
+  stations:
+    columns:
+      - station_id TEXT PRIMARY KEY
+      - day_bits TEXT # similar with HRDF
 
   stops:
     columns:
