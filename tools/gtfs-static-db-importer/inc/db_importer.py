@@ -24,13 +24,13 @@ class CalendarData(TypedDict):
     end_date: datetime.datetime
     days_no: int
 
-class ParentStopRoutesDayBitsRow(TypedDict):
-    stop_id: str
+class StationRoutesDayBitsRow(TypedDict):
+    station_id: str
     day_bits: str
     routes_day_bits: Optional[str]
 
-class ParentStopIdRow(TypedDict):
-    stop_id: str
+class StationIdRow(TypedDict):
+    station_id: str
 
 class StopMissingParentRow(TypedDict):
     stop_id: str
@@ -81,8 +81,8 @@ class GTFS_DB_Importer:
         self._update_trips()
         self._update_frequencies()
         self._update_routes()
-        self._populate_parent_stops()
-        self._update_parent_stops_day_bits()
+        self._populate_stations()
+        self._update_stations_day_bits()
         self._update_agency_day_bits()
         self._update_routes_representative_trip()
         self._create_fts_routes()
@@ -651,22 +651,23 @@ class GTFS_DB_Importer:
             'days_no': days_no,
         }
 
-    def _populate_parent_stops(self):
-        log_message('START populate parent_stops')
+    def _populate_stations(self):
+        log_message('START populate stations')
 
-        sql_path = self._map_sql_queries['select_parent_stops']
+        sql_path = self._map_sql_queries['select_stations']
         sql = load_sql_from_file(sql_path)
 
         days_no = self._calendar_data['days_no']
 
-        table_name = 'parent_stops'
+        table_name = 'stations'
         table_csv_writer = self._db_engine.create_csv_writer(table_name)
         empty_day_bits = '0' * days_no
 
         db_cursor = self._db_engine.get_cursor()
         for db_row in db_cursor.execute(sql):
+            station_row = cast(StationIdRow, db_row)
             row_dict = {
-                'stop_id': db_row['stop_id'],
+                'station_id': station_row['station_id'],
                 'day_bits': empty_day_bits,
             }
             table_csv_writer.prepare_row(row_dict)
@@ -678,42 +679,46 @@ class GTFS_DB_Importer:
         self._db_engine.load_csv_into_table(table_name, table_csv_writer.csv_path)
         self._db_engine.add_table_indexes(table_name)
 
-        log_message('DONE populate parent_stops')
+        sql_path = self._map_sql_queries['update_stops_synthetic_station']
+        sql = load_sql_from_file(sql_path)
+        self._db_engine.run_sql_script(sql)
+
+        log_message('DONE populate stations')
         print('')
 
-    def _update_parent_stops_day_bits(self):
-        log_message('START update parent_stops day_bits')
+    def _update_stations_day_bits(self):
+        log_message('START update stations day_bits')
 
-        sql_path = self._map_sql_queries['select_parent_stop_routes_day_bits']
+        sql_path = self._map_sql_queries['select_station_routes_day_bits']
         sql = load_sql_from_file(sql_path)
 
         db_temp_path = self._db_engine.get_db_tmp_path()
-        table_csv_path = Path(f'{db_temp_path}/parent_stops_update_day_bits.csv')
-        table_csv_updater = CSV_Updater(table_csv_path, ['stop_id', 'day_bits'])
+        table_csv_path = Path(f'{db_temp_path}/stations_update_day_bits.csv')
+        table_csv_updater = CSV_Updater(table_csv_path, ['station_id', 'day_bits'])
 
-        parent_stops_cursor = self._db_engine.get_cursor()
+        stations_cursor = self._db_engine.get_cursor()
         db_cursor = self._db_engine.get_cursor()
         row_id = 0
-        for parent_stop_db_row in parent_stops_cursor.execute('SELECT stop_id FROM parent_stops'):
+        for station_db_row in stations_cursor.execute('SELECT station_id FROM stations'):
             if row_id % 10_000 == 0:
                 formatted_row_id = f'{row_id:,}'.replace(',', "'")
-                log_message(f'... parsed {formatted_row_id} parent stops')
+                log_message(f'... parsed {formatted_row_id} stations')
 
-            parent_stop_id_row = cast(ParentStopIdRow, parent_stop_db_row)
-            stop_id = parent_stop_id_row['stop_id']
-            db_cursor.execute(sql, {'stop_id': stop_id})
+            station_id_row = cast(StationIdRow, station_db_row)
+            station_id = station_id_row['station_id']
+            db_cursor.execute(sql, {'station_id': station_id})
             db_row = db_cursor.fetchone()
 
             if db_row is None:
                 continue
             
-            parent_stop_row = cast(ParentStopRoutesDayBitsRow, db_row)
-            routes_day_bits_s = parent_stop_row['routes_day_bits']
+            station_row = cast(StationRoutesDayBitsRow, db_row)
+            routes_day_bits_s = station_row['routes_day_bits']
             
             if routes_day_bits_s is None:
                 continue
 
-            stop_day_bits = list(parent_stop_row['day_bits'])
+            stop_day_bits = list(station_row['day_bits'])
             routes_day_bits = routes_day_bits_s.split(',')
             for route_day_bits in routes_day_bits:
                 for idx, day_bit in enumerate(route_day_bits):
@@ -722,7 +727,7 @@ class GTFS_DB_Importer:
 
             stop_day_bits_s = ''.join(stop_day_bits)
             row_dict = {
-                'stop_id': parent_stop_row['stop_id'],
+                'station_id': station_row['station_id'],
                 'day_bits': stop_day_bits_s,
             }
             table_csv_updater.prepare_row(row_dict)
@@ -730,14 +735,14 @@ class GTFS_DB_Importer:
             row_id += 1
         # loop
 
-        parent_stops_cursor.close()
+        stations_cursor.close()
         db_cursor.close()
         table_csv_updater.close()
 
-        sql_template = 'UPDATE parent_stops SET day_bits = :day_bits WHERE stop_id = :stop_id'
+        sql_template = 'UPDATE stations SET day_bits = :day_bits WHERE station_id = :station_id'
         self._db_engine.update_table_from_csv(table_csv_path, sql_template)
 
-        log_message('DONE update parent_stops day_bits')
+        log_message('DONE update stations day_bits')
         print('')
 
     def _update_agency_day_bits(self):
