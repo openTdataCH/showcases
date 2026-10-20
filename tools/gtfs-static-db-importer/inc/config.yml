@@ -7,8 +7,8 @@ map_sql_queries:
   update_stop_times_reset: "[APP_PATH]/inc/sql/update_stop_times_reset.sql"
   select_route_trips_calendar_day_bits: "[APP_PATH]/inc/sql/select_route_trips_calendar_day_bits.sql"
   select_agency_routes_day_bits: "[APP_PATH]/inc/sql/select_agency_routes_day_bits.sql"
-  select_parent_stops: "[APP_PATH]/inc/sql/select_parent_stops.sql"
-  select_parent_stop_routes_day_bits: "[APP_PATH]/inc/sql/select_parent_stop_routes_day_bits.sql"
+  select_stations: "[APP_PATH]/inc/sql/select_stations.sql"
+  select_station_routes_day_bits: "[APP_PATH]/inc/sql/select_station_routes_day_bits.sql"
   create_fts_routes: "[APP_PATH]/inc/sql/create_fts_routes.sql"
   update_routes_representative_trip: "[APP_PATH]/inc/sql/update_routes_representative_trip.sql"
 
