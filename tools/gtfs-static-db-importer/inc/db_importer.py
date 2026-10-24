@@ -36,6 +36,12 @@ class StopMissingParentRow(TypedDict):
     stop_id: str
     parent_station: str
 
+class MissingTripMinutesCountRow(TypedDict):
+    trips_count: int
+
+class TripIdRow(TypedDict):
+    trip_id: str
+
 class GTFS_DB_Importer:
     _map_sql_queries: dict[str, str]
     _db_engine: SQLiteDBEngine
@@ -79,6 +85,7 @@ class GTFS_DB_Importer:
 
         self._update_calendar()
         self._update_trips()
+        self._check_trips_day_minutes()
         self._update_frequencies()
         self._update_routes()
         self._populate_stations()
@@ -538,6 +545,33 @@ class GTFS_DB_Importer:
         print('')
     # _update_trips
     
+    def _check_trips_day_minutes(self):
+        log_message('START check trips day minutes')
+
+        missing_minutes_condition = 'departure_day_minutes = -1 OR arrival_day_minutes = -1'
+        db_cursor = self._db_engine.get_cursor()
+        try:
+            db_cursor.execute(f'SELECT COUNT(*) AS trips_count FROM trips WHERE {missing_minutes_condition}')
+            count_row = cast(MissingTripMinutesCountRow, db_cursor.fetchone())
+            missing_trips_count = count_row['trips_count']
+
+            if missing_trips_count > 0:
+                db_cursor.execute(f'SELECT trip_id FROM trips WHERE {missing_minutes_condition} LIMIT 5')
+                trip_ids = []
+                for db_row in db_cursor:
+                    trip_row = cast(TripIdRow, db_row)
+                    trip_ids.append(trip_row['trip_id'])
+                trip_ids_s = ', '.join(trip_ids)
+                raise ValueError(
+                    f'{missing_trips_count} trips still have departure_day_minutes or arrival_day_minutes '
+                    f'set to -1 after updating trips. Example trip IDs: {trip_ids_s}'
+                )
+        finally:
+            db_cursor.close()
+
+        log_message('DONE check trips day minutes')
+        print('')
+
     def _update_routes(self):
         '''
         - DROP routes
