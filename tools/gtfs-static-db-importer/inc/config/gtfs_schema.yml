@@ -172,8 +172,10 @@ tables:
       - direction_id TEXT
       - block_id INTEGER
       # custom below
-      - departure_day_minutes INTEGER NOT NULL
-      - arrival_day_minutes INTEGER NOT NULL
+      - definition: departure_day_minutes INTEGER NOT NULL
+        value_if_blank: -1
+      - definition: arrival_day_minutes INTEGER NOT NULL
+        value_if_blank: -1
       - departure_time TEXT
       - arrival_time TEXT
       - stop_times_s TEXT # added to avoid GROUP_BY queries
