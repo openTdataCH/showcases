@@ -24,10 +24,10 @@ class CalendarData(TypedDict):
     end_date: datetime.datetime
     days_no: int
 
-class StationRoutesDayBitsRow(TypedDict):
+class StationTripsDayBitsRow(TypedDict):
     station_id: str
     day_bits: str
-    routes_day_bits: Optional[str]
+    trips_day_bits: Optional[str]
 
 class StationIdRow(TypedDict):
     station_id: str
@@ -285,7 +285,7 @@ class GTFS_DB_Importer:
         db_cursor = self._db_engine.get_cursor()
         row_id = 1
         for db_row in db_cursor.execute(sql):
-            if row_id % 10000 == 0:
+            if row_id % 50_000 == 0:
                 formatted_row_id = f'{row_id:,}'.replace(',', "'")
                 log_message(f'... parsed {formatted_row_id} rows')
 
@@ -689,7 +689,7 @@ class GTFS_DB_Importer:
     def _update_stations_day_bits(self):
         log_message('START update stations day_bits')
 
-        sql_path = self._map_sql_queries['select_station_routes_day_bits']
+        sql_path = self._map_sql_queries['select_station_trips_day_bits']
         sql = load_sql_from_file(sql_path)
 
         db_temp_path = self._db_engine.get_db_tmp_path()
@@ -712,16 +712,16 @@ class GTFS_DB_Importer:
             if db_row is None:
                 continue
             
-            station_row = cast(StationRoutesDayBitsRow, db_row)
-            routes_day_bits_s = station_row['routes_day_bits']
+            station_row = cast(StationTripsDayBitsRow, db_row)
+            trips_day_bits_s = station_row['trips_day_bits']
             
-            if routes_day_bits_s is None:
+            if trips_day_bits_s is None:
                 continue
 
             stop_day_bits = list(station_row['day_bits'])
-            routes_day_bits = routes_day_bits_s.split(',')
-            for route_day_bits in routes_day_bits:
-                for idx, day_bit in enumerate(route_day_bits):
+            trips_day_bits = trips_day_bits_s.split(',')
+            for trip_day_bits in trips_day_bits:
+                for idx, day_bit in enumerate(trip_day_bits):
                     if day_bit == '1':
                         stop_day_bits[idx] = '1'
 
