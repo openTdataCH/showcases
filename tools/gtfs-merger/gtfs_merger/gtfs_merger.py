@@ -26,5 +26,6 @@ class GTFS_Merger:
         merged_feed = feed_info_merger.prepare(self._first_gtfs_path, self._second_gtfs_path)
         self._output_gtfs_path.mkdir(parents=True, exist_ok=True)
         feed_info_merger.write(self._output_gtfs_path, merged_feed, schema['tables']['feed_info'])
+        print()
 
         log_message('DONE GTFS folder merge')

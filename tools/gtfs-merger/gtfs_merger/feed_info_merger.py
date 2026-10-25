@@ -37,7 +37,6 @@ class FeedInfoMerger:
         finally:
             csv_writer.close()
         log_message(f'Saved merged feed_info to {output_path}')
-        print()
 
     def _read_feed_info(self, gtfs_path: Path) -> Dict[str, str]:
         feed_info_path = gtfs_path / 'feed_info.txt'
