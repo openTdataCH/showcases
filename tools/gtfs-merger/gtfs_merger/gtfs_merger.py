@@ -1,6 +1,7 @@
 from pathlib import Path
 
 from .agency_merger import AgencyMerger
+from .calendar_merger import CalendarMerger
 from .feed_info_merger import FeedInfoMerger
 from .helpers.config_helpers import load_yaml_config
 from .helpers.log_helpers import log_message
@@ -33,6 +34,13 @@ class GTFS_Merger:
         agency_merger.merge(
             self._first_gtfs_path, self._second_gtfs_path, self._output_gtfs_path,
             schema['tables']['agency'],
+        )
+        print()
+
+        calendar_merger = CalendarMerger()
+        calendar_merger.merge(
+            self._first_gtfs_path, self._second_gtfs_path, self._output_gtfs_path,
+            schema['tables']['calendar'],
         )
         print()
 
