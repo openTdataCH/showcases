@@ -32,7 +32,7 @@ class CSVImporter:
             if not os.path.isfile(gtfs_file_path):
                 is_skip_ok = False
 
-                if table_name in ['feed_info', 'frequencies', 'shapes', 'transfers']:
+                if table_name in ['calendar_dates', 'feed_info', 'frequencies', 'shapes', 'transfers']:
                     is_skip_ok = True
 
                 if table_name == 'calendar':
