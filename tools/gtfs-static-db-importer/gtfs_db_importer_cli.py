@@ -1,13 +1,15 @@
 import argparse, os, sys
 from pathlib import Path
 
-from gtfs_db_importer.helpers.config_helpers import load_convenience_config
+from gtfs_db_importer.helpers.config_helpers import load_yaml_config
 from gtfs_db_importer.db_importer import GTFS_DB_Importer
 from gtfs_db_importer.helpers.gtfs_helpers import compute_gtfs_day_from_resource_path, compute_gtfs_db_filename
 
 def main():
     script_path = Path(os.path.realpath(__file__))
-    app_config = load_convenience_config(script_path)
+    script_parent_path = script_path.parent
+    config_path = Path(f'{script_parent_path}/gtfs_db_importer/config.yml')
+    app_config = load_yaml_config(config_path, script_parent_path)
 
     parser = argparse.ArgumentParser()
     parser.add_argument('--gtfs-folder-path', '--gtfs-folder-path')
