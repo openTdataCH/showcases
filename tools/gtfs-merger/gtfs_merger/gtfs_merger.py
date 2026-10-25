@@ -9,6 +9,7 @@ from .frequencies_merger import FrequenciesMerger
 from .routes_merger import RoutesMerger
 from .trips_merger import TripsMerger
 from .stops_merger import StopsMerger
+from .transfers_merger import TransfersMerger
 from .helpers.config_helpers import load_yaml_config
 from .helpers.log_helpers import log_message
 
@@ -83,6 +84,13 @@ class GTFS_Merger:
         stops_merger.merge(
             self._first_gtfs_path, self._second_gtfs_path, self._output_gtfs_path,
             schema['tables']['stops'],
+        )
+        print()
+
+        transfers_merger = TransfersMerger()
+        transfers_merger.merge(
+            self._first_gtfs_path, self._second_gtfs_path, self._output_gtfs_path,
+            schema['tables']['transfers'], self._gtfs1_route_id_map,
         )
         print()
 
