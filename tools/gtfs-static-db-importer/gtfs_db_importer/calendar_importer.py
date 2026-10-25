@@ -15,56 +15,10 @@ class CalendarImporter:
     def __init__(self, context: ImportContext):
         self._context = context
 
-    def resolve_day_bits_date_range(self):
-        feed_info_rows = self._context.db_engine.query('SELECT feed_start_date, feed_end_date FROM feed_info')
-        if len(feed_info_rows) == 1:
-            feed_info_row = feed_info_rows[0]
-            start_date_s = feed_info_row['feed_start_date']
-            end_date_s = feed_info_row['feed_end_date']
-            if start_date_s and end_date_s:
-                try:
-                    start_date = datetime.datetime.strptime(start_date_s, '%Y%m%d')
-                    end_date = datetime.datetime.strptime(end_date_s, '%Y%m%d')
-                except ValueError:
-                    log_message('Invalid feed_info dates; deriving the day_bits range from calendar data')
-                else:
-                    if start_date <= end_date:
-                        self._set_calendar_data(start_date, end_date)
-                        log_message(f'Day bits range from feed_info: {start_date:%Y%m%d} - {end_date:%Y%m%d}')
-                        return
-
-        date_rows = self._context.db_engine.query('SELECT MIN(start_date) AS start_date, MAX(end_date) AS end_date FROM calendar')
-        date_row = date_rows[0]
-        date_source = 'calendar'
-        if date_row['start_date'] is None or date_row['end_date'] is None:
-            date_rows = self._context.db_engine.query('SELECT MIN(date) AS start_date, MAX(date) AS end_date FROM calendar_dates')
-            date_row = date_rows[0]
-            date_source = 'calendar_dates'
-
-        if date_row['start_date'] is None or date_row['end_date'] is None:
-            raise ValueError('Cannot determine day_bits dates from feed_info, calendar or calendar_dates')
-
-        start_date = datetime.datetime.strptime(date_row['start_date'], '%Y%m%d')
-        end_date = datetime.datetime.strptime(date_row['end_date'], '%Y%m%d')
-        today_date = datetime.datetime.combine(datetime.datetime.today(), datetime.datetime.min.time())
-        max_days_no = 366
-        if (today_date - start_date).days > max_days_no:
-            start_date = today_date - datetime.timedelta(days=max_days_no)
-        if (end_date - today_date).days > max_days_no:
-            end_date = today_date + datetime.timedelta(days=max_days_no)
-        if end_date < start_date:
-            raise ValueError('Calendar date range is empty after applying the 366-day limits')
-
-        self._set_calendar_data(start_date, end_date)
-        log_message(f'Day bits range from {date_source}, with 366-day limits: {start_date:%Y%m%d} - {end_date:%Y%m%d}')
-
-    def _set_calendar_data(self, start_date: datetime.datetime, end_date: datetime.datetime):
-        days_no = (end_date - start_date).days + 1
-        self._context.calendar_data = {
-            'start_date': start_date,
-            'end_date': end_date,
-            'days_no': days_no,
-        }
+    def log_date_range(self):
+        start_date = self._context.calendar_data['start_date']
+        end_date = self._context.calendar_data['end_date']
+        log_message(f'Import date range (inclusive): {start_date:%Y%m%d} - {end_date:%Y%m%d}')
 
     def update_calendar(self):
         '''
