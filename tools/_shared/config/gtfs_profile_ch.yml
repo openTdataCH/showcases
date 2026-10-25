@@ -108,6 +108,7 @@ tables:
       - to_trip_id TEXT
       - transfer_type INTEGER
       - min_transfer_time INTEGER
+      - service_id TEXT
     indexes:
       - from_stop_id
       - to_stop_id
@@ -116,6 +117,7 @@ tables:
       - from_trip_id
       - to_trip_id
       - transfer_type
+      - service_id TEXT
 
   trips:
     columns:
