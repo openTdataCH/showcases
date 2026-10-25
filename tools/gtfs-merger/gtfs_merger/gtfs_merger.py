@@ -1,10 +1,12 @@
 from pathlib import Path
+from typing import Dict
 
 from .agency_merger import AgencyMerger
 from .calendar_merger import CalendarMerger
 from .calendar_dates_merger import CalendarDatesMerger
 from .feed_info_merger import FeedInfoMerger
 from .frequencies_merger import FrequenciesMerger
+from .routes_merger import RoutesMerger
 from .helpers.config_helpers import load_yaml_config
 from .helpers.log_helpers import log_message
 
@@ -14,6 +16,7 @@ class GTFS_Merger:
         self._first_gtfs_path = first_gtfs_path
         self._second_gtfs_path = second_gtfs_path
         self._output_gtfs_path = output_gtfs_path
+        self._gtfs1_route_id_map: Dict[str, str] = {}
 
     def merge(self):
         log_message('START GTFS folder merge')
@@ -57,6 +60,13 @@ class GTFS_Merger:
         frequencies_merger.merge(
             self._first_gtfs_path, self._second_gtfs_path, self._output_gtfs_path,
             schema['tables']['frequencies'],
+        )
+        print()
+
+        routes_merger = RoutesMerger()
+        self._gtfs1_route_id_map = routes_merger.merge(
+            self._first_gtfs_path, self._second_gtfs_path, self._output_gtfs_path,
+            schema['tables']['routes'],
         )
         print()
 
