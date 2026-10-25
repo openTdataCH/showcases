@@ -1,4 +1,5 @@
 import csv
+from contextlib import closing
 from pathlib import Path
 from typing import cast
 
@@ -14,6 +15,20 @@ from .import_context import ImportContext
 class TripsImporter:
     def __init__(self, context: ImportContext):
         self._context = context
+
+    def load_active_trip_ids(self):
+        log_message('Development shortcut: load_active_trip_ids should not be called in the final import flow')
+        self._context.active_trip_ids.clear()
+        sql = 'SELECT trip_id FROM trips'
+        with closing(self._context.db_engine.get_cursor()) as db_cursor:
+            for db_row in db_cursor.execute(sql):
+                trip_row = cast(TripIdRow, db_row)
+                self._context.active_trip_ids.add(trip_row['trip_id'])
+            # loop trips DB rows
+        # with
+        formatted_trip_count = f'{len(self._context.active_trip_ids):,}'.replace(',', "'")
+        log_message(f'Loaded {formatted_trip_count} active trip IDs from existing trips')
+        print()
 
     def import_trips(self):
         log_message('START import trips')
