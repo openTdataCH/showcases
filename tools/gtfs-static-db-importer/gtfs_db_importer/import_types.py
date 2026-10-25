@@ -25,5 +25,7 @@ class MissingTripMinutesCountRow(TypedDict):
 class TripIdRow(TypedDict):
     trip_id: str
 
-class CalendarDateServiceRow(TypedDict):
+class CalendarExceptionGroupRow(TypedDict):
     service_id: str
+    exception_dates: str
+
