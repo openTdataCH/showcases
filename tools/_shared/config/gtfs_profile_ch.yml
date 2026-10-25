@@ -1,0 +1,140 @@
+# https://www.oev-info.ch/sites/default/files/2024-12/GTFS_Profil_Switzerland_Version_0_17_en.pdf
+tables:
+  agency:
+    columns:
+      - agency_id TEXT PRIMARY KEY
+      - agency_name TEXT
+      - agency_url TEXT
+      - agency_timezone TEXT
+      - agency_lang TEXT
+      - agency_phone TEXT
+
+  calendar_dates:
+    columns:
+      - service_id TEXT
+      - date TEXT
+      - exception_type INTEGER
+    indexes:
+      - service_id
+      - date
+      - exception_type
+
+  calendar:
+    columns:
+      - service_id TEXT PRIMARY KEY
+      - monday INTEGER
+      - tuesday INTEGER
+      - wednesday INTEGER
+      - thursday INTEGER
+      - friday INTEGER
+      - saturday INTEGER
+      - sunday INTEGER
+      - start_date TEXT
+      - end_date TEXT
+
+  feed_info:
+    columns:
+      - feed_publisher_name TEXT
+      - feed_publisher_url TEXT
+      - feed_lang TEXT
+      - feed_start_date TEXT
+      - feed_end_date TEXT
+      - feed_version TEXT
+
+  frequencies:
+    columns:
+      - trip_id TEXT PRIMARY KEY
+      - start_time TEXT
+      - end_time TEXT
+      - headway_secs INTEGER
+      - exact_times INTEGER
+    indexes:
+      - trip_id
+      - headway_secs
+      - exact_times
+
+  routes:
+    columns:
+      - route_id TEXT PRIMARY KEY
+      - agency_id TEXT
+      - route_short_name TEXT
+      - route_long_name TEXT
+      - route_desc TEXT
+      - route_type INTEGER
+    indexes:
+      - agency_id
+      - route_short_name
+      - route_type
+
+  stop_times:
+    columns:
+      - trip_id TEXT
+      - arrival_time TEXT
+      - departure_time TEXT
+      - stop_id TEXT
+      - stop_sequence INTEGER
+      - pickup_type INTEGER
+      - drop_off_type INTEGER
+    indexes:
+      - trip_id
+      - stop_id
+      - stop_sequence
+      - pickup_type
+      - drop_off_type
+
+  stops:
+    columns:
+      - stop_id TEXT PRIMARY KEY
+      - stop_name TEXT
+      - stop_lat REAL
+      - stop_lon REAL
+      - location_type TEXT
+      - parent_station TEXT
+      - platform_code TEXT
+      - original_stop_id TEXT
+    indexes:
+      - location_type
+      - parent_station
+      - platform_code
+      - original_stop_id
+
+  transfers:
+    columns:
+      - from_stop_id TEXT
+      - to_stop_id TEXT
+      - from_route_id TEXT
+      - to_route_id TEXT
+      - from_trip_id TEXT
+      - to_trip_id TEXT
+      - transfer_type INTEGER
+      - min_transfer_time INTEGER
+    indexes:
+      - from_stop_id
+      - to_stop_id
+      - from_route_id
+      - to_route_id
+      - from_trip_id
+      - to_trip_id
+      - transfer_type
+
+  trips:
+    columns:
+      - trip_id TEXT PRIMARY KEY
+      - route_id TEXT
+      - service_id TEXT
+      - trip_headsign TEXT
+      - trip_short_name TEXT
+      - direction_id TEXT
+      - block_id INTEGER
+      - shape_id TEXT
+      - original_trip_id TEXT # https://opentransportdata.swiss/en/cookbook/gtfs/#tripstxt
+      - hints TEXT
+    indexes:
+      - route_id
+      - service_id
+      - direction_id
+      - block_id
+      - shape_id
+      - trip_short_name
+      - original_trip_id
+      - stop_times_count
