@@ -24,7 +24,7 @@ class TripsMerger:
                 with input_path.open('r', encoding='utf-8-sig', newline='') as csv_file:
                     csv_reader = csv.DictReader(csv_file)
                     for trip_row in csv_reader:
-                        if row_count % 500_000 == 0:
+                        if row_count % 1_000_000 == 0:
                             formatted_row_count = f'{row_count:,}'.replace(',', "'")
                             log_message(f'... parsed {formatted_row_count} trips from {input_path}')
 
