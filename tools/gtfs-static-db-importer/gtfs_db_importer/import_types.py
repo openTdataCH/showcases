@@ -29,3 +29,6 @@ class CalendarExceptionGroupRow(TypedDict):
     service_id: str
     exception_dates: str
 
+class ServiceIdRow(TypedDict):
+    service_id: str
+

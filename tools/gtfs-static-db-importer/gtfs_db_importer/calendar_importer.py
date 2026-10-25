@@ -8,7 +8,7 @@ from .helpers.csv_updater import CSV_Updater
 from .helpers.file_helpers import compute_file_rows_no
 from .helpers.log_helpers import log_message
 from .import_context import ImportContext
-from .import_types import CalendarExceptionGroupRow
+from .import_types import CalendarExceptionGroupRow, ServiceIdRow
 
 
 class CalendarImporter:
@@ -19,6 +19,20 @@ class CalendarImporter:
         start_date = self._context.calendar_data['start_date']
         end_date = self._context.calendar_data['end_date']
         log_message(f'Import date range (inclusive): {start_date:%Y-%m-%d} - {end_date:%Y-%m-%d}')
+    
+    def load_active_service_ids(self):
+        log_message('Development shortcut: load_active_service_ids should not be called in the final import flow')
+        self._context.active_service_ids.clear()
+        sql = 'SELECT service_id FROM calendar'
+        with closing(self._context.db_engine.get_cursor()) as db_cursor:
+            for db_row in db_cursor.execute(sql):
+                calendar_row = cast(ServiceIdRow, db_row)
+                self._context.active_service_ids.add(calendar_row['service_id'])
+            # loop calendar DB rows
+        # with
+        formatted_service_count = f'{len(self._context.active_service_ids):,}'.replace(',', "'")
+        log_message(f'Loaded {formatted_service_count} active service IDs from existing calendar')
+        print()
 
     def import_calendar(self):
         log_message('START import calendar')
