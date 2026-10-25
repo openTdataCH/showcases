@@ -2,11 +2,13 @@ import os, sys
 from pathlib import Path
 import yaml
 import datetime
+from typing import Optional
 
 from .helpers.db_engine import SQLiteDBEngine
 from .helpers.log_helpers import log_message
 
 from .import_context import ImportContext
+from .date_range import resolve_import_date_range
 from .csv_importer import CSVImporter
 from .calendar_importer import CalendarImporter
 from .agency_importer import AgencyImporter
@@ -26,6 +28,7 @@ class GTFS_DB_Importer:
 
     def __init__(self, app_config, gtfs_folder_path: Path, db_path: Path,
                  from_date: Optional[datetime.datetime] = None, to_date: Optional[datetime.datetime] = None):
+        calendar_data = resolve_import_date_range(gtfs_folder_path, from_date, to_date)
         self._map_sql_queries = app_config['map_sql_queries']
 
         script_path = Path(os.path.realpath(__file__))
@@ -41,6 +44,7 @@ class GTFS_DB_Importer:
             map_sql_queries=self._map_sql_queries,
             gtfs_folder_path=self._gtfs_folder_path,
             bo_realtime_csv_path=self._bo_realtime_csv_path,
+            calendar_data=calendar_data,
         )
         self._csv_importer = CSVImporter(context)
         self._calendar_importer = CalendarImporter(context)
@@ -65,9 +69,9 @@ class GTFS_DB_Importer:
         
         self._write_lock_file()
 
+        self._calendar_importer.log_date_range()
         self._csv_importer.import_csv_tables()
-        
-        self._calendar_importer.resolve_day_bits_date_range()
+
         self._agency_importer.populate_agency_gtfs_rt()
         self._stops_importer.check_stops_parent_depth()
         self._stops_importer.check_stops_missing_parents()

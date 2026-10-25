@@ -1,4 +1,4 @@
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Dict
 
@@ -12,4 +12,4 @@ class ImportContext:
     map_sql_queries: Dict[str, str]
     gtfs_folder_path: Path
     bo_realtime_csv_path: Path
-    calendar_data: CalendarData = field(init=False)
+    calendar_data: CalendarData
