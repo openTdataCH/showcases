@@ -1,7 +1,9 @@
+import csv
 from pathlib import Path
 from typing import cast
 
 from .helpers.csv_updater import CSV_Updater
+from .helpers.file_helpers import compute_file_rows_no
 from .helpers.gtfs_helpers import convert_datetime_to_day_minutes, extract_stop_times_data_from_s, massage_datetime_to_hhmm
 from .helpers.log_helpers import log_message
 from .helpers.db_helpers import load_sql_from_file
@@ -12,6 +14,56 @@ from .import_context import ImportContext
 class TripsImporter:
     def __init__(self, context: ImportContext):
         self._context = context
+
+    def import_trips(self):
+        log_message('START import trips')
+        trips_path = self._context.gtfs_folder_path / 'trips.txt'
+        log_message(f'Reading {trips_path}')
+        total_rows = compute_file_rows_no(trips_path) - 1
+        if total_rows < 0:
+            total_rows = 0
+        formatted_total_rows = f'{total_rows:,}'.replace(',', "'")
+        log_message(f'Found {formatted_total_rows} trips rows')
+
+        trips_writer = self._context.db_engine.create_csv_writer('trips')
+        self._context.active_trip_ids.clear()
+        row_count = 0
+        kept_rows = 0
+        try:
+            with trips_path.open('r', encoding='utf-8-sig', newline='') as csv_file:
+                csv_reader = csv.DictReader(csv_file)
+                for trip_row in csv_reader:
+                    if row_count % 500_000 == 0:
+                        formatted_row_count = f'{row_count:,}'.replace(',', "'")
+                        formatted_kept_rows = f'{kept_rows:,}'.replace(',', "'")
+                        log_message(
+                            f'... parsed {formatted_row_count} / {formatted_total_rows} trips rows; '
+                            f'kept {formatted_kept_rows}'
+                        )
+
+                    # Keep only trips whose service runs within the resolved calendar range.
+                    if trip_row['service_id'] in self._context.active_service_ids:
+                        trips_writer.prepare_row(trip_row)
+                        self._context.active_trip_ids.add(trip_row['trip_id'])
+                        kept_rows += 1
+                    row_count += 1
+                # loop trips.txt CSV rows
+            # with
+        finally:
+            trips_writer.close()
+
+        formatted_row_count = f'{row_count:,}'.replace(',', "'")
+        formatted_kept_rows = f'{kept_rows:,}'.replace(',', "'")
+        log_message(
+            f'Parsed {formatted_row_count} / {formatted_total_rows} trips rows; '
+            f'kept {formatted_kept_rows}'
+        )
+        self._context.db_engine.drop_and_recreate_table('trips')
+        self._context.db_engine.load_csv_into_table('trips', trips_writer.csv_path)
+        self._context.db_engine.add_table_indexes('trips')
+        log_message(f'Imported {formatted_kept_rows} / {formatted_row_count} trips rows')
+        log_message('DONE import trips')
+        print()
 
     def update_trips(self):
         '''
