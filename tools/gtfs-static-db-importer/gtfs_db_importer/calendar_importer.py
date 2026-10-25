@@ -9,6 +9,7 @@ from .helpers.log_helpers import log_message
 from .helpers.db_helpers import load_sql_from_file
 from .helpers.file_helpers import compute_file_rows_no
 from .import_context import ImportContext
+from .import_types import CalendarDateServiceRow
 
 
 class CalendarImporter:
@@ -66,6 +67,7 @@ class CalendarImporter:
         calendar_days = list(calendar.day_name)
 
         db_cursor = self._context.db_engine.get_cursor()
+        self._context.active_service_ids.clear()
         row_id = 1
         for db_row in db_cursor.execute(sql):
             if row_id % 50_000 == 0:
@@ -74,6 +76,8 @@ class CalendarImporter:
 
             service_id = db_row['service_id']
             day_bits = self._compute_calendar_day_bits(db_row, calendar_days, calendar_start_date, calendar_end_date)
+            if '1' in day_bits:
+                self._context.active_service_ids.add(service_id)
 
             row_dict = {
                 'service_id': service_id,
@@ -97,6 +101,9 @@ class CalendarImporter:
         sql_template = 'UPDATE calendar SET day_bits = :day_bits, start_date = :start_date, end_date = :end_date WHERE service_id = :service_id'
         self._context.db_engine.update_table_from_csv(table_csv_updater.csv_path, sql_template)
 
+        active_services_no = len(self._context.active_service_ids)
+        formatted_active_services_no = f'{active_services_no:,}'.replace(',', "'")
+        log_message(f'Resolved {formatted_active_services_no} services active in the import date range')
         log_message('DONE update calendar')
         print('')
 
@@ -191,7 +198,7 @@ class CalendarImporter:
 
     def _fill_calendar_from_calendar_dates(self):
         '''
-        INSERT into calendar.txt DISTINCT rows from calendar_dates
+        Add calendar rows for services defined only in calendar_dates.
         '''
         log_message(f'START filling calendar from calendar_dates')
 
