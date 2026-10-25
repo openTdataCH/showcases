@@ -445,7 +445,7 @@ class GTFS_DB_Importer:
         db_cursor = self._db_engine.get_cursor()
         row_id = 1
         for db_row in db_cursor.execute(sql):
-            if row_id % 200_000 == 0:
+            if row_id % 500_000 == 0:
                 formatted_row_id = f'{row_id:,}'.replace(',', "'")
                 log_message(f'... parsed {formatted_row_id} rows')
 
