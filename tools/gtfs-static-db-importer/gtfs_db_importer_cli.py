@@ -1,9 +1,22 @@
-import argparse, os, sys
+import os, sys
+
+import argparse
+from datetime import datetime
 from pathlib import Path
 
 from gtfs_db_importer.helpers.config_helpers import load_yaml_config
 from gtfs_db_importer.db_importer import GTFS_DB_Importer
 from gtfs_db_importer.helpers.gtfs_helpers import compute_gtfs_day_from_resource_path, compute_gtfs_db_filename
+
+def parse_date(value: str) -> datetime:
+    normalized_value = value.replace('-', '')
+    try:
+        parsed_date = datetime.strptime(normalized_value, '%Y%m%d')
+    except ValueError as error:
+        raise argparse.ArgumentTypeError('Expected a valid date in YYYYMMDD or YYYY-MM-DD format') from error
+    if parsed_date.strftime('%Y%m%d') != normalized_value:
+        raise argparse.ArgumentTypeError('Expected a valid date in YYYYMMDD or YYYY-MM-DD format')
+    return parsed_date
 
 def main():
     script_path = Path(os.path.realpath(__file__))
@@ -14,6 +27,10 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--gtfs-folder-path', '--gtfs-folder-path')
     parser.add_argument('--output-db-path', '--output-db-path')
+    parser.add_argument('--from', dest='from_date', type=parse_date, metavar='DATE',
+                        help='Inclusive start date (YYYYMMDD or YYYY-MM-DD); defaults to feed_start_date')
+    parser.add_argument('--to', dest='to_date', type=parse_date, metavar='DATE',
+                        help='Inclusive end date (YYYYMMDD or YYYY-MM-DD); defaults to feed_end_date')
 
     args = parser.parse_args()
     input_path = args.gtfs_folder_path
@@ -49,7 +66,9 @@ def main():
 
     os.makedirs(db_path.parent, exist_ok=True)
 
-    gtfs_importer = GTFS_DB_Importer(app_config, gtfs_folder_path, db_path)
+    gtfs_importer = GTFS_DB_Importer(
+        app_config, gtfs_folder_path, db_path, from_date=args.from_date, to_date=args.to_date,
+    )
     gtfs_importer.start()
 
 if __name__ == "__main__":

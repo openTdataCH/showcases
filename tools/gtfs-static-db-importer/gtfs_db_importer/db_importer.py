@@ -24,7 +24,8 @@ class GTFS_DB_Importer:
     _db_lock_path: Path
     _bo_realtime_csv_path: Path
 
-    def __init__(self, app_config, gtfs_folder_path: Path, db_path: Path):
+    def __init__(self, app_config, gtfs_folder_path: Path, db_path: Path,
+                 from_date: Optional[datetime.datetime] = None, to_date: Optional[datetime.datetime] = None):
         self._map_sql_queries = app_config['map_sql_queries']
 
         script_path = Path(os.path.realpath(__file__))
