@@ -1,15 +1,14 @@
-import sys
+import csv
+import datetime
+from contextlib import closing
 from pathlib import Path
-
-import math
-import calendar, datetime
+from typing import Dict, Set, cast
 
 from .helpers.csv_updater import CSV_Updater
-from .helpers.log_helpers import log_message
-from .helpers.db_helpers import load_sql_from_file
 from .helpers.file_helpers import compute_file_rows_no
+from .helpers.log_helpers import log_message
 from .import_context import ImportContext
-from .import_types import CalendarDateServiceRow
+from .import_types import CalendarExceptionGroupRow
 
 
 class CalendarImporter:
@@ -21,235 +20,229 @@ class CalendarImporter:
         end_date = self._context.calendar_data['end_date']
         log_message(f'Import date range (inclusive): {start_date:%Y-%m-%d} - {end_date:%Y-%m-%d}')
 
-    def update_calendar(self):
-        '''
-        - add services defined only in calendar_dates
-        - UPDATE calendar SET day_bits, start_date, end_date
-        '''
-        log_message('START update calendar')
-        
-        rows_no = self._context.db_engine.count_rows_table('calendar')
-        formatted_rows_no = f'{rows_no:,}'.replace(',', "'")
-        log_message(f'... found {formatted_rows_no} rows in calendar')
+    def import_calendar(self):
+        log_message('START import calendar')
+        calendar_path = self._context.gtfs_folder_path / 'calendar.txt'
+        calendar_dates_path = self._context.gtfs_folder_path / 'calendar_dates.txt'
+        if not calendar_path.is_file() and not calendar_dates_path.is_file():
+            raise ValueError('At least one of calendar.txt or calendar_dates.txt is required')
+
+        # Load only exceptions within the inclusive import range into calendar_dates.
+        self._import_calendar_dates(calendar_dates_path)
         print()
 
-        calendar_dates_rows_no = self._context.db_engine.count_rows_table('calendar_dates')
-        if rows_no == 0 and calendar_dates_rows_no == 0:
-            raise ValueError('Cannot resolve services: calendar and calendar_dates are both empty')
-        if calendar_dates_rows_no > 0:
-            self._fill_calendar_from_calendar_dates()
-
-        db_temp_path = self._context.db_engine.get_db_tmp_path()
-        table_csv_path = Path(f'{db_temp_path}/calendar_update_day_bits.csv')
-        table_csv_updater = CSV_Updater(table_csv_path, ['service_id', 'day_bits', 'start_date', 'end_date'])
-
-        calendar_start_date = self._context.calendar_data['start_date']
-        calendar_end_date = self._context.calendar_data['end_date']
-
-        log_message('CALENDAR DATES:')
-
-        calendar_days_no = self._context.calendar_data['days_no']
-        calendar_weeks_no = math.ceil(calendar_days_no / 7)
-        
-        log_message(f'   START      : {calendar_start_date}')
-        log_message(f'   END        : {calendar_end_date}')
-        log_message(f'   DAYS NO    : {calendar_days_no}')
-        log_message(f'   WEEKS NO   : {calendar_weeks_no}')
-        print('')
-
-        log_message(f"... running calendar + GROUP_CONCAT(calendar_dates) SQL")
-
-        self._context.db_engine.run_sql("UPDATE calendar SET day_bits = ''")
-
-        sql_path = self._context.map_sql_queries['select_calendar_dates_group_by']
-        sql = load_sql_from_file(sql_path)
-
-        calendar_days = list(calendar.day_name)
-
-        db_cursor = self._context.db_engine.get_cursor()
+        calendar_writer = self._context.db_engine.create_csv_writer('calendar')
+        seen_service_ids: Set[str] = set()
         self._context.active_service_ids.clear()
-        row_id = 1
-        for db_row in db_cursor.execute(sql):
-            if row_id % 50_000 == 0:
-                formatted_row_id = f'{row_id:,}'.replace(',', "'")
-                log_message(f'... parsed {formatted_row_id} rows')
+        try:
+            if calendar_path.is_file():
+                log_message(f'Reading {calendar_path}')
+                total_rows = compute_file_rows_no(calendar_path) - 1
+                if total_rows < 0:
+                    total_rows = 0
+                formatted_total_rows = f'{total_rows:,}'.replace(',', "'")
+                log_message(f'Found {formatted_total_rows} calendar rows')
+                row_count = 0
+                with calendar_path.open('r', encoding='utf-8-sig', newline='') as csv_file:
+                    csv_reader = csv.DictReader(csv_file)
+                    for calendar_row in csv_reader:
+                        if row_count % 50_000 == 0:
+                            formatted_row_count = f'{row_count:,}'.replace(',', "'")
+                            formatted_kept_rows = f'{len(self._context.active_service_ids):,}'.replace(',', "'")
+                            log_message(
+                                f'... parsed {formatted_row_count} / {formatted_total_rows} rows; '
+                                f'kept {formatted_kept_rows}'
+                            )
 
-            service_id = db_row['service_id']
-            day_bits = self._compute_calendar_day_bits(db_row, calendar_days, calendar_start_date, calendar_end_date)
-            if '1' in day_bits:
-                self._context.active_service_ids.add(service_id)
+                        service_id = calendar_row['service_id']
+                        # Fetch this service's exceptions; keep only one service's mapping in memory.
+                        exceptions = self._read_service_exceptions(service_id)
+                        
+                        # Build the weekday pattern, apply exceptions, and write only active services.
+                        self._write_active_service(calendar_row, exceptions, calendar_writer)
+                        
+                        # Mark inactive services too, so they are not processed again as exception-only services.
+                        seen_service_ids.add(service_id)
+                        row_count += 1
+                    # loop calendar.txt CSV rows
+                # with
+                formatted_row_count = f'{row_count:,}'.replace(',', "'")
+                formatted_kept_rows = f'{len(self._context.active_service_ids):,}'.replace(',', "'")
+                log_message(
+                    f'Parsed {formatted_row_count} / {formatted_total_rows} calendar rows; '
+                    f'kept {formatted_kept_rows}'
+                )
 
-            row_dict = {
-                'service_id': service_id,
-                'day_bits': day_bits,
-                'start_date': calendar_start_date.strftime("%Y%m%d"),
-                'end_date': calendar_end_date.strftime("%Y%m%d"),
-            }
-            table_csv_updater.prepare_row(row_dict)
-            
-            row_id += 1
-        db_cursor.close()
+            # Handle services absent from calendar.txt, including feeds with only calendar_dates.txt.
+            # Start with weekdays off, apply exceptions, and write only services with active days.
+            self._write_exception_only_services(seen_service_ids, calendar_writer)
+        finally:
+            calendar_writer.close()
+
+        # Load the retained calendar rows, then remove exceptions for discarded services.
+        self._context.db_engine.drop_and_recreate_table('calendar')
+        self._context.db_engine.load_csv_into_table('calendar', calendar_writer.csv_path)
+        self._context.db_engine.add_table_indexes('calendar')
+        self._context.db_engine.run_sql("""
+            DELETE FROM calendar_dates
+            WHERE NOT EXISTS (
+                SELECT 1 FROM calendar
+                WHERE calendar.service_id = calendar_dates.service_id
+            )
+        """)
+        formatted_service_count = f'{len(self._context.active_service_ids):,}'.replace(',', "'")
+        log_message(f'Imported {formatted_service_count} active services; inactive services were discarded')
+        log_message('DONE import calendar')
         print()
 
-        table_csv_updater.close()
+    def _import_calendar_dates(self, calendar_dates_path: Path):
+        start_date = self._context.calendar_data['start_date']
+        end_date = self._context.calendar_data['end_date']
+        calendar_dates_writer = self._context.db_engine.create_csv_writer('calendar_dates')
+        kept_rows = 0
+        row_count = 0
+        try:
+            if calendar_dates_path.is_file():
+                log_message(f'START parse calendar_dates.txt from {calendar_dates_path}')
+                total_rows = compute_file_rows_no(calendar_dates_path) - 1
+                if total_rows < 0:
+                    total_rows = 0
+                formatted_total_rows = f'{total_rows:,}'.replace(',', "'")
+                log_message(f'... found {formatted_total_rows} calendar_dates rows')
+                with calendar_dates_path.open('r', encoding='utf-8-sig', newline='') as csv_file:
+                    csv_reader = csv.DictReader(csv_file)
+                    for exception_row in csv_reader:
+                        if row_count % 2_000_000 == 0:
+                            formatted_row_count = f'{row_count:,}'.replace(',', "'")
+                            formatted_kept_rows = f'{kept_rows:,}'.replace(',', "'")
+                            log_message(
+                                f'... parsed {formatted_row_count} / {formatted_total_rows} rows; '
+                                f'kept {formatted_kept_rows}'
+                            )
 
-        log_message(f'DB_Table_CSV_Updater: START UPDATE from CSV: {table_csv_path.name}')
-        lines_no = compute_file_rows_no(table_csv_path) - 1
-        formatted_lines_no = f'{lines_no:,}'.replace(',', "'")
-        log_message(f'... found {formatted_lines_no} rows')
+                        exception_date = datetime.datetime.strptime(exception_row['date'], '%Y%m%d')
+                        if start_date <= exception_date <= end_date:
+                            exception_type = exception_row['exception_type']
+                            if exception_type != '1' and exception_type != '2':
+                                raise ValueError(f'Invalid calendar_dates exception_type: {exception_type}')
+                            calendar_dates_writer.prepare_row(exception_row)
+                            kept_rows += 1
+                        row_count += 1
+                    # loop
+                # with
+                formatted_row_count = f'{row_count:,}'.replace(',', "'")
+                formatted_kept_rows = f'{kept_rows:,}'.replace(',', "'")
+                log_message(f'Kept {formatted_kept_rows} / {formatted_row_count} rows (kept/parsed)')
+        finally:
+            calendar_dates_writer.close()
 
-        sql_template = 'UPDATE calendar SET day_bits = :day_bits, start_date = :start_date, end_date = :end_date WHERE service_id = :service_id'
-        self._context.db_engine.update_table_from_csv(table_csv_updater.csv_path, sql_template)
+        self._context.db_engine.drop_and_recreate_table('calendar_dates')
+        self._context.db_engine.load_csv_into_table('calendar_dates', calendar_dates_writer.csv_path)
+        self._context.db_engine.add_table_indexes('calendar_dates')
+        formatted_kept_rows = f'{kept_rows:,}'.replace(',', "'")
+        formatted_row_count = f'{row_count:,}'.replace(',', "'")
+        log_message(f'DONE INSERT calendar_dates.txt')
 
-        active_services_no = len(self._context.active_service_ids)
-        formatted_active_services_no = f'{active_services_no:,}'.replace(',', "'")
-        log_message(f'Resolved {formatted_active_services_no} services active in the import date range')
-        log_message('DONE update calendar')
-        print('')
+    def _read_service_exceptions(self, service_id: str) -> Dict[int, str]:
+        sql = """
+            SELECT service_id, GROUP_CONCAT(date || '|' || exception_type) AS exception_dates
+            FROM calendar_dates
+            WHERE service_id = :service_id
+            GROUP BY service_id
+        """
+        exceptions: Dict[int, str] = {}
+        with closing(self._context.db_engine.get_cursor()) as db_cursor:
+            db_cursor.execute(sql, {'service_id': service_id})
+            db_row = db_cursor.fetchone()
+            if db_row is not None:
+                exception_group = cast(CalendarExceptionGroupRow, db_row)
+                exceptions = self._parse_exceptions(exception_group['exception_dates'])
+        # with
+        return exceptions
 
-    def _compute_calendar_day_bits(self, calendar_db_row, calendar_days, calendar_start_date, calendar_end_date):
-        start_date_s = calendar_db_row['start_date']
-        end_date_s = calendar_db_row['end_date']
+    def _write_exception_only_services(self, seen_service_ids: Set[str], calendar_writer: CSV_Updater):
+        sql = """
+            SELECT service_id, GROUP_CONCAT(date || '|' || exception_type) AS exception_dates
+            FROM calendar_dates
+            GROUP BY service_id
+        """
+        start_date = self._context.calendar_data['start_date']
+        end_date = self._context.calendar_data['end_date']
+        row_count = 0
+        with closing(self._context.db_engine.get_cursor()) as db_cursor:
+            for db_row in db_cursor.execute(sql):
+                if row_count % 50_000 == 0:
+                    formatted_row_count = f'{row_count:,}'.replace(',', "'")
+                    log_message(f'... checked {formatted_row_count} calendar_dates service groups')
 
-        start_date = datetime.datetime.strptime(start_date_s, "%Y%m%d")
-        if start_date < calendar_start_date:
-            start_date = calendar_start_date
+                exception_group = cast(CalendarExceptionGroupRow, db_row)
+                service_id = exception_group['service_id']
+                if service_id not in seen_service_ids:
+                    exceptions = self._parse_exceptions(exception_group['exception_dates'])
+                    calendar_row = {
+                        'service_id': service_id,
+                        'monday': '0',
+                        'tuesday': '0',
+                        'wednesday': '0',
+                        'thursday': '0',
+                        'friday': '0',
+                        'saturday': '0',
+                        'sunday': '0',
+                        'start_date': start_date.strftime('%Y%m%d'),
+                        'end_date': end_date.strftime('%Y%m%d'),
+                    }
+                    self._write_active_service(calendar_row, exceptions, calendar_writer)
+                row_count += 1
+            # loop
+        # with
 
-        end_date = datetime.datetime.strptime(end_date_s, "%Y%m%d")
-        if end_date > calendar_end_date:
-            end_date = calendar_end_date
+    def _parse_exceptions(self, exception_dates: str) -> Dict[int, str]:
+        exceptions: Dict[int, str] = {}
+        start_date = self._context.calendar_data['start_date']
+        for exception in exception_dates.split(','):
+            date_s, exception_type = exception.split('|')
+            exception_date = datetime.datetime.strptime(date_s, '%Y%m%d')
+            day_index = (exception_date - start_date).days
+            if exception_type == '1':
+                day_bit = '1'
+            else:
+                day_bit = '0'
+            exceptions[day_index] = day_bit
+        # loop
+        return exceptions
 
-        days_no = (end_date - start_date).days
-        weeks_no = math.ceil((days_no + 1) / 7)
+    def _write_active_service(self, calendar_row: Dict[str, str], exceptions: Dict[int, str],
+                              calendar_writer: CSV_Updater):
+        start_date = self._context.calendar_data['start_date']
+        end_date = self._context.calendar_data['end_date']
+        service_start = datetime.datetime.strptime(calendar_row['start_date'], '%Y%m%d')
+        service_end = datetime.datetime.strptime(calendar_row['end_date'], '%Y%m%d')
+        if service_start < start_date:
+            service_start = start_date
+        if service_end > end_date:
+            service_end = end_date
 
-        map_weekdays_pattern = {}
-        for calendar_day in calendar_days:
-            day_key = calendar_day.lower()
-            is_enabled = int(calendar_db_row[day_key]) == 1
-            map_weekdays_pattern[calendar_day] = is_enabled
-
-        if start_date > end_date:
-            feed_days_no = (calendar_end_date - calendar_start_date).days + 1
-            day_bits = '0' * feed_days_no
-        else:
-            day_bits_list = self._fill_day_bits_pattern(start_date, end_date, weeks_no, map_weekdays_pattern)
-            day_bits = ''.join(day_bits_list)
-
-            days_no_before = (start_date - calendar_start_date).days
-            days_no_after = (calendar_end_date - end_date).days
-
-            day_bits = '0' * days_no_before + day_bits + '0' * days_no_after
-
-        day_bits_list = list(day_bits)
-        self._update_day_bits_from_calendar_dates(day_bits_list, calendar_db_row, calendar_start_date)
-        day_bits = ''.join(day_bits_list)
-
-        return day_bits
-
-    def _fill_day_bits_pattern(self, start_date, end_date, weeks_no, map_weekdays_pattern):
-        day_bits_7d = []
-        current_date = start_date
-        while current_date <= end_date:
-            weekday_s = current_date.strftime("%A")
-            day_bit = '1' if map_weekdays_pattern[weekday_s] else '0'
-            day_bits_7d.append(day_bit)
-            
-            current_date = current_date + datetime.timedelta(days=1)
-
-            if len(day_bits_7d) == 7:
-                break
-
-        day_bits_s = ''.join(day_bits_7d) * weeks_no
-        days_no = (end_date - start_date).days
-        day_bits_end_idx = days_no + 1
-        day_bits_s = day_bits_s[0:day_bits_end_idx]
-
-        day_bits = list(day_bits_s)
-
-        return day_bits
-
-    def _update_day_bits_from_calendar_dates(self, day_bits_list, calendar_db_row, start_date):
-        calendar_dates_cno = calendar_db_row['calendar_dates_cno']
-        if calendar_dates_cno == 0:
+        day_bits = ['0'] * self._context.calendar_data['days_no']
+        weekday_columns = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday']
+        current_date = service_start
+        while current_date <= service_end:
+            weekday_column = weekday_columns[current_date.weekday()]
+            if int(calendar_row[weekday_column]) == 1:
+                day_index = (current_date - start_date).days
+                day_bits[day_index] = '1'
+            current_date += datetime.timedelta(days=1)
+        # loop
+        for day_index, day_bit in exceptions.items():
+            day_bits[day_index] = day_bit
+        # loop
+        
+        # discard calendars out of from/to range
+        if '1' not in day_bits:
             return
 
-        exception_dates = calendar_db_row['exception_dates'].split(',')
-
-        for calendar_dates_s in exception_dates:
-            (date_s, exception_type_s) = calendar_dates_s.split('|')
-            row_date = datetime.datetime.strptime(date_s, "%Y%m%d")
-            exception_type = int(exception_type_s)
-
-            day_bit = None
-            if exception_type == 1:
-                day_bit = '1'
-            if exception_type == 2:
-                day_bit = '0'
-            if not day_bit:
-                print(f'ERROR - cant interpret exception_type {calendar_dates_s}')
-                sys.exit()
-
-            day_idx = (row_date-start_date).days
-            if day_idx < 0:
-                continue
-            if day_idx >= len(day_bits_list):
-                continue
-            day_bits_list[day_idx] = day_bit
-
-    def _fill_calendar_from_calendar_dates(self):
-        '''
-        Add calendar rows for services defined only in calendar_dates.
-        '''
-        log_message(f'START filling calendar from calendar_dates')
-
-        calendar_dates_rows_no = self._context.db_engine.count_rows_table('calendar_dates')
-        if calendar_dates_rows_no == 0:
-            print('ERROR - empty calendar, calendar_dates ?')
-            sys.exit()
-        log_message(f'... found {calendar_dates_rows_no} rows')
-
-        sql = 'SELECT MIN(date) AS min_date FROM calendar_dates'
-        min_date_s = self._context.db_engine.query(sql)[0]['min_date']
-
-        sql = 'SELECT MAX(date) AS max_date FROM calendar_dates'
-        max_date_s = self._context.db_engine.query(sql)[0]['max_date']
-
-        sql = 'SELECT DISTINCT(service_id) AS service_id FROM calendar_dates'
-        db_cursor = self._context.db_engine.get_cursor()
-
-        table_name = 'calendar'
-        calendar_table_writer = self._context.db_engine.create_csv_writer(table_name)
-        
-        row_idx = 0
-        for db_row in db_cursor.execute(sql):
-            trip_new_row = {
-                'service_id': db_row['service_id'],
-                'monday': 0, 
-                'tuesday': 0, 
-                'wednesday': 0, 
-                'thursday': 0, 
-                'friday': 0, 
-                'saturday': 0, 
-                'sunday': 0, 
-                'start_date': min_date_s, 
-                'end_date': max_date_s, 
-                'day_bits': '',
-            }
-            calendar_table_writer.prepare_row(trip_new_row)
-
-            row_idx += 1
-        #end loop SQL
-        db_cursor.close()
-
-        calendar_table_writer.close()
-
-        log_message(f'... found {row_idx} calendar entries')
-
-        log_message(f'START populate table calendar')
-
-        self._context.db_engine.drop_and_recreate_table(table_name)
-        self._context.db_engine.load_csv_into_table(table_name, calendar_table_writer.csv_path)
-        self._context.db_engine.add_table_indexes(table_name)
-
-        log_message(f'DONE _fill_calendar_from_calendar_dates')
-        print()
+        service_id = calendar_row['service_id']
+        calendar_row['day_bits'] = ''.join(day_bits)
+        calendar_row['start_date'] = start_date.strftime('%Y%m%d')
+        calendar_row['end_date'] = end_date.strftime('%Y%m%d')
+        calendar_writer.prepare_row(calendar_row)
+        self._context.active_service_ids.add(service_id)
