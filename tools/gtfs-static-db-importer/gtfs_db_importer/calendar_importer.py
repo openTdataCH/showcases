@@ -22,8 +22,7 @@ class CalendarImporter:
 
     def update_calendar(self):
         '''
-        - if calendar.txt is missing
-            INSERT into calendar.txt DISTINCT rows from calendar_dates
+        - add services defined only in calendar_dates
         - UPDATE calendar SET day_bits, start_date, end_date
         '''
         log_message('START update calendar')
@@ -33,7 +32,10 @@ class CalendarImporter:
         log_message(f'... found {formatted_rows_no} rows in calendar')
         print()
 
-        if rows_no == 0:
+        calendar_dates_rows_no = self._context.db_engine.count_rows_table('calendar_dates')
+        if rows_no == 0 and calendar_dates_rows_no == 0:
+            raise ValueError('Cannot resolve services: calendar and calendar_dates are both empty')
+        if calendar_dates_rows_no > 0:
             self._fill_calendar_from_calendar_dates()
 
         db_temp_path = self._context.db_engine.get_db_tmp_path()
