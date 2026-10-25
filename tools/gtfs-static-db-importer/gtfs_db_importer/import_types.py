@@ -24,3 +24,6 @@ class MissingTripMinutesCountRow(TypedDict):
 
 class TripIdRow(TypedDict):
     trip_id: str
+
+class CalendarDateServiceRow(TypedDict):
+    service_id: str
