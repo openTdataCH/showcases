@@ -1,5 +1,6 @@
 import os, sys
 from pathlib import Path
+from typing import List, Optional
 
 from .helpers.log_helpers import log_message
 
@@ -10,11 +11,12 @@ class CSVImporter:
     def __init__(self, context: ImportContext):
         self._context = context
 
-    def import_csv_tables(self):
+    def import_csv_tables(self, table_names: Optional[List[str]] = None):
         '''
         Batch TRUNCATE / INSERT csv rows from GTFS in db.
         '''
-        table_names = ['agency', 'calendar', 'calendar_dates', 'feed_info', 'frequencies', 'routes', 'shapes', 'stop_times', 'stops', 'transfers', 'trips']
+        if table_names is None:
+            table_names = ['agency', 'feed_info', 'frequencies', 'routes', 'shapes', 'stop_times', 'stops', 'transfers', 'trips']
 
         log_message(f'START BATCH IMPORT')
 
