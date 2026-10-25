@@ -1,9 +1,9 @@
 import argparse, os, sys
 from pathlib import Path
 
-from inc.shared.inc.helpers.config_helpers import load_convenience_config
-from inc.db_importer import GTFS_DB_Importer
-from inc.shared.inc.helpers.gtfs_helpers import compute_gtfs_day_from_resource_path, compute_gtfs_db_filename
+from gtfs_db_importer.helpers.config_helpers import load_convenience_config
+from gtfs_db_importer.db_importer import GTFS_DB_Importer
+from gtfs_db_importer.helpers.gtfs_helpers import compute_gtfs_day_from_resource_path, compute_gtfs_db_filename
 
 def main():
     script_path = Path(os.path.realpath(__file__))
