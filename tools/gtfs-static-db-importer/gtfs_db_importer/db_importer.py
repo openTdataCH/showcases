@@ -8,16 +8,16 @@ from typing import Optional, TypedDict, cast
 
 import calendar, datetime
 
-from .shared.inc.helpers.db_engine import SQLiteDBEngine
-from .shared.inc.controllers.bo_controller import BusinessOrganisationGtfsRtCsvRow
-from .shared.inc.models.gtfs.agency import AgencyDB
+from .helpers.db_engine import SQLiteDBEngine
+from .controllers.bo_controller import BusinessOrganisationGtfsRtCsvRow
+from .models.gtfs.agency import AgencyDB
 
-from .shared.inc.helpers.csv_helpers import read_csv_rows
-from .shared.inc.helpers.csv_updater import CSV_Updater
-from .shared.inc.helpers.gtfs_helpers import convert_datetime_to_day_minutes, extract_stop_times_data_from_s, massage_datetime_to_hhmm, seconds_to_hhmmss
-from .shared.inc.helpers.log_helpers import log_message
-from .shared.inc.helpers.db_helpers import load_sql_from_file
-from .shared.inc.helpers.file_helpers import compute_file_rows_no
+from .helpers.csv_helpers import read_csv_rows
+from .helpers.csv_updater import CSV_Updater
+from .helpers.gtfs_helpers import convert_datetime_to_day_minutes, extract_stop_times_data_from_s, massage_datetime_to_hhmm, seconds_to_hhmmss
+from .helpers.log_helpers import log_message
+from .helpers.db_helpers import load_sql_from_file
+from .helpers.file_helpers import compute_file_rows_no
 
 class CalendarData(TypedDict):
     start_date: datetime.datetime
