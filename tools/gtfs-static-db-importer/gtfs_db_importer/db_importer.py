@@ -70,13 +70,13 @@ class GTFS_DB_Importer:
         self._write_lock_file()
 
         self._calendar_importer.log_date_range()
+        self._calendar_importer.import_calendar()
         self._csv_importer.import_csv_tables()
 
         self._agency_importer.populate_agency_gtfs_rt()
         self._stops_importer.check_stops_parent_depth()
         self._stops_importer.check_stops_missing_parents()
 
-        self._calendar_importer.update_calendar()
         self._trips_importer.update_trips()
         self._trips_importer.check_trips_day_minutes()
         self._frequencies_importer.update_frequencies()
