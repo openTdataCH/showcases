@@ -14,3 +14,4 @@ class ImportContext:
         self.bo_realtime_csv_path = bo_realtime_csv_path
         self.calendar_data = calendar_data
         self.active_service_ids: Set[str] = set()
+        self.active_trip_ids: Set[str] = set()

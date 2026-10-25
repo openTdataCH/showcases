@@ -71,6 +71,8 @@ class GTFS_DB_Importer:
 
         self._calendar_importer.log_date_range()
         self._calendar_importer.import_calendar()
+        
+        self._trips_importer.import_trips()
         self._csv_importer.import_csv_tables()
 
         self._agency_importer.populate_agency_gtfs_rt()
