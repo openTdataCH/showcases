@@ -6,7 +6,7 @@ from gtfs_merger.gtfs_merger import GTFS_Merger
 
 def main():
     parser = argparse.ArgumentParser(
-        description='Merge two GTFS folders (currently feed_info.txt, agency.txt and calendar.txt).'
+        description='Merge two GTFS folders'
     )
     parser.add_argument('--gtfs1', type=Path, required=True)
     parser.add_argument('--gtfs2', type=Path, required=True)
