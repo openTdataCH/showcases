@@ -1,20 +1,20 @@
 map_sql_queries:
-  select_stops_exceeding_parent_depth: "[APP_PATH]/inc/sql/select_stops_exceeding_parent_depth.sql"
-  select_stops_missing_parents: "[APP_PATH]/inc/sql/select_stops_missing_parents.sql"
-  select_calendar_dates_group_by: "[APP_PATH]/inc/sql/select_calendar_dates_group_by.sql"
-  select_stop_times_group_by: "[APP_PATH]/inc/sql/select_trips_group_by_stop_times.sql"
-  select_trips_group_by_stop_times_frequencies: "[APP_PATH]/inc/sql/select_trips_group_by_stop_times_frequencies.sql"
-  update_stop_times_reset: "[APP_PATH]/inc/sql/update_stop_times_reset.sql"
-  select_route_trips_calendar_day_bits: "[APP_PATH]/inc/sql/select_route_trips_calendar_day_bits.sql"
-  select_agency_routes_day_bits: "[APP_PATH]/inc/sql/select_agency_routes_day_bits.sql"
-  select_stations: "[APP_PATH]/inc/sql/select_stations.sql"
-  update_stops_synthetic_station: "[APP_PATH]/inc/sql/update_stops_synthetic_station.sql"
-  select_station_trips_day_bits: "[APP_PATH]/inc/sql/select_station_trips_day_bits.sql"
-  create_fts_routes: "[APP_PATH]/inc/sql/create_fts_routes.sql"
-  update_routes_representative_trip: "[APP_PATH]/inc/sql/update_routes_representative_trip.sql"
+  select_stops_exceeding_parent_depth: "[APP_PATH]/gtfs_db_importer/sql/select_stops_exceeding_parent_depth.sql"
+  select_stops_missing_parents: "[APP_PATH]/gtfs_db_importer/sql/select_stops_missing_parents.sql"
+  select_calendar_dates_group_by: "[APP_PATH]/gtfs_db_importer/sql/select_calendar_dates_group_by.sql"
+  select_stop_times_group_by: "[APP_PATH]/gtfs_db_importer/sql/select_trips_group_by_stop_times.sql"
+  select_trips_group_by_stop_times_frequencies: "[APP_PATH]/gtfs_db_importer/sql/select_trips_group_by_stop_times_frequencies.sql"
+  update_stop_times_reset: "[APP_PATH]/gtfs_db_importer/sql/update_stop_times_reset.sql"
+  select_route_trips_calendar_day_bits: "[APP_PATH]/gtfs_db_importer/sql/select_route_trips_calendar_day_bits.sql"
+  select_agency_routes_day_bits: "[APP_PATH]/gtfs_db_importer/sql/select_agency_routes_day_bits.sql"
+  select_stations: "[APP_PATH]/gtfs_db_importer/sql/select_stations.sql"
+  update_stops_synthetic_station: "[APP_PATH]/gtfs_db_importer/sql/update_stops_synthetic_station.sql"
+  select_station_trips_day_bits: "[APP_PATH]/gtfs_db_importer/sql/select_station_trips_day_bits.sql"
+  create_fts_routes: "[APP_PATH]/gtfs_db_importer/sql/create_fts_routes.sql"
+  update_routes_representative_trip: "[APP_PATH]/gtfs_db_importer/sql/update_routes_representative_trip.sql"
 
 other_config_paths:
-  scripts_config: "[APP_PATH]/inc/config/scripts-config.yml"
+  scripts_config: "[APP_PATH]/gtfs_db_importer/config/scripts-config.yml"
 
 gtfs_dbs_base_path: "[APP_PATH]/data/gtfs-static-dbs"
 gtfs_ckan_json_path: "[APP_PATH]/data/ckan-utils-tmp/ckan_[PACKAGE_ID].json"
@@ -38,7 +38,7 @@ gtfs_rt_updates:
 
 gtfs_filter:
   sql:
-    populate-link_filter: "[APP_PATH]/inc/sql/gtfs-filter/01-populate-link_filter.sql"
-    select_table_template: "[APP_PATH]/inc/sql/gtfs-filter/02-run-[TABLE_NAME].sql"
-  gtfs_export_profile: "[APP_PATH]/inc/config/gtfs_profile_ch.yml"
-  gtfs_db_schema_path: "[APP_PATH]/inc/config/gtfs_filter_schema.yml"
+    populate-link_filter: "[APP_PATH]/gtfs_db_importer/sql/gtfs-filter/01-populate-link_filter.sql"
+    select_table_template: "[APP_PATH]/gtfs_db_importer/sql/gtfs-filter/02-run-[TABLE_NAME].sql"
+  gtfs_export_profile: "[APP_PATH]/gtfs_db_importer/config/gtfs_profile_ch.yml"
+  gtfs_db_schema_path: "[APP_PATH]/gtfs_db_importer/config/gtfs_filter_schema.yml"
