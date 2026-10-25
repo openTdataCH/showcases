@@ -4,6 +4,7 @@ from .agency_merger import AgencyMerger
 from .calendar_merger import CalendarMerger
 from .calendar_dates_merger import CalendarDatesMerger
 from .feed_info_merger import FeedInfoMerger
+from .frequencies_merger import FrequenciesMerger
 from .helpers.config_helpers import load_yaml_config
 from .helpers.log_helpers import log_message
 
@@ -49,6 +50,13 @@ class GTFS_Merger:
         calendar_dates_merger.merge(
             self._first_gtfs_path, self._second_gtfs_path, self._output_gtfs_path,
             schema['tables']['calendar_dates'],
+        )
+        print()
+
+        frequencies_merger = FrequenciesMerger()
+        frequencies_merger.merge(
+            self._first_gtfs_path, self._second_gtfs_path, self._output_gtfs_path,
+            schema['tables']['frequencies'],
         )
         print()
 
