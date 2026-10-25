@@ -18,6 +18,12 @@ class CSVImporter:
         if table_names is None:
             table_names = ['agency', 'feed_info', 'frequencies', 'routes', 'shapes', 'stop_times', 'stops', 'transfers', 'trips']
 
+        if 'calendar' in table_names or 'calendar_dates' in table_names:
+            calendar_path = self._context.gtfs_folder_path / 'calendar.txt'
+            calendar_dates_path = self._context.gtfs_folder_path / 'calendar_dates.txt'
+            if not calendar_path.is_file() and not calendar_dates_path.is_file():
+                raise ValueError('At least one of calendar.txt or calendar_dates.txt is required')
+
         log_message(f'START BATCH IMPORT')
 
         for table_name in table_names:
