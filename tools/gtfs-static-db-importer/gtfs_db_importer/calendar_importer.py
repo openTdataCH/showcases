@@ -18,7 +18,7 @@ class CalendarImporter:
     def log_date_range(self):
         start_date = self._context.calendar_data['start_date']
         end_date = self._context.calendar_data['end_date']
-        log_message(f'Import date range (inclusive): {start_date:%Y%m%d} - {end_date:%Y%m%d}')
+        log_message(f'Import date range (inclusive): {start_date:%Y-%m-%d} - {end_date:%Y-%m-%d}')
 
     def update_calendar(self):
         '''
