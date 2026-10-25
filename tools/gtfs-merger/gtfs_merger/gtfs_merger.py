@@ -1,5 +1,6 @@
 from pathlib import Path
 
+from .agency_merger import AgencyMerger
 from .feed_info_merger import FeedInfoMerger
 from .helpers.config_helpers import load_yaml_config
 from .helpers.log_helpers import log_message
@@ -26,6 +27,13 @@ class GTFS_Merger:
         merged_feed = feed_info_merger.prepare(self._first_gtfs_path, self._second_gtfs_path)
         self._output_gtfs_path.mkdir(parents=True, exist_ok=True)
         feed_info_merger.write(self._output_gtfs_path, merged_feed, schema['tables']['feed_info'])
+        print()
+
+        agency_merger = AgencyMerger()
+        agency_merger.merge(
+            self._first_gtfs_path, self._second_gtfs_path, self._output_gtfs_path,
+            schema['tables']['agency'],
+        )
         print()
 
         log_message('DONE GTFS folder merge')
