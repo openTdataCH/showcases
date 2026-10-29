@@ -59,10 +59,13 @@ class AgencyImporter:
         self._context.db_engine.load_csv_into_table('agency', agency_writer.csv_path)
         self._context.db_engine.add_table_indexes('agency')
         log_message(f'Imported {formatted_kept_rows} / {formatted_row_count} agency rows')
+
+        # Create one link_agency row per agency, then combine its routes' day bits.
+        self._populate_agency_gtfs_rt()
         log_message('DONE import agency')
         print()
 
-    def populate_agency_gtfs_rt(self):
+    def _populate_agency_gtfs_rt(self):
         log_message(f'START populate GTFS-RT status')
 
         map_gtfs_agency = cast(dict[str, AgencyDB], self._context.db_engine.query_table_map_by_field('agency', 'agency_id'))
