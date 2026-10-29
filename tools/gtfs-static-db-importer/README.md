@@ -16,12 +16,16 @@ $ bash bootstrap.sh
 
 CLI tool that ingests GTFS data into a SQLite DB
 
-Usage: `python3 gtfs_db_importer_cli.py [-h] [--gtfs-folder-path GTFS_FOLDER_PATH] [--output-db-path OUTPUT_DB_PATH]`
+Usage: `python3 gtfs_db_importer_cli.py [-h] [--gtfs-folder-path GTFS_FOLDER_PATH] [--output-db-path OUTPUT_DB_PATH] [--from DATE] [--to DATE]`
 
 | Param | Required | Description | Example |
 | - | - | - | - |
 | `--gtfs-db-path` | `YES` | input path to GTFS folder, relative or absolute|  |
 | `--output-db-path` |  | path to output SQLite DB, relative or absolute. If not givem the script will create it under ./data/gtfs-static-dbs folder| `/tmp/foo.db` |
+| `--from` |  | Inclusive calendar start date in `YYYYMMDD` or `YYYY-MM-DD` format. Defaults to `feed_info.feed_start_date`. | `2026-12-13` |
+| `--to` |  | Inclusive calendar end date in `YYYYMMDD` or `YYYY-MM-DD` format. Defaults to `feed_info.feed_end_date`. | `2027-12-11` |
+
+Both bounds must be within the dates in `feed_info.txt`, and `--from` must be on or before `--to`. 
 
 Example
 
