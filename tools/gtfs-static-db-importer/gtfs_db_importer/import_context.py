@@ -15,3 +15,4 @@ class ImportContext:
         self.calendar_data = calendar_data
         self.active_service_ids: Set[str] = set()
         self.active_trip_ids: Set[str] = set()
+        self.active_route_ids: Set[str] = set()

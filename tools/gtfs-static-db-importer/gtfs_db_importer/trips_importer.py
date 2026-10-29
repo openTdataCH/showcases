@@ -8,7 +8,7 @@ from .helpers.file_helpers import compute_file_rows_no
 from .helpers.gtfs_helpers import convert_datetime_to_day_minutes, extract_stop_times_data_from_s, massage_datetime_to_hhmm
 from .helpers.log_helpers import log_message
 from .helpers.db_helpers import load_sql_from_file
-from .import_types import MissingTripMinutesCountRow, TripIdRow
+from .import_types import MissingTripMinutesCountRow, TripIdRow, TripRouteIdRow
 from .import_context import ImportContext
 
 
@@ -19,11 +19,13 @@ class TripsImporter:
     def load_active_trip_ids(self):
         log_message('Development shortcut: load_active_trip_ids should not be called in the final import flow')
         self._context.active_trip_ids.clear()
-        sql = 'SELECT trip_id FROM trips'
+        self._context.active_route_ids.clear()
+        sql = 'SELECT trip_id, route_id FROM trips'
         with closing(self._context.db_engine.get_cursor()) as db_cursor:
             for db_row in db_cursor.execute(sql):
-                trip_row = cast(TripIdRow, db_row)
+                trip_row = cast(TripRouteIdRow, db_row)
                 self._context.active_trip_ids.add(trip_row['trip_id'])
+                self._context.active_route_ids.add(trip_row['route_id'])
             # loop trips DB rows
         # with
         formatted_trip_count = f'{len(self._context.active_trip_ids):,}'.replace(',', "'")
@@ -42,6 +44,7 @@ class TripsImporter:
 
         trips_writer = self._context.db_engine.create_csv_writer('trips')
         self._context.active_trip_ids.clear()
+        self._context.active_route_ids.clear()
         row_count = 0
         kept_rows = 0
         try:
@@ -60,6 +63,7 @@ class TripsImporter:
                     if trip_row['service_id'] in self._context.active_service_ids:
                         trips_writer.prepare_row(trip_row)
                         self._context.active_trip_ids.add(trip_row['trip_id'])
+                        self._context.active_route_ids.add(trip_row['route_id'])
                         kept_rows += 1
                     row_count += 1
                 # loop trips.txt CSV rows
