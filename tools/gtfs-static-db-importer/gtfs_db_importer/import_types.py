@@ -38,3 +38,7 @@ class ServiceIdRow(TypedDict):
 class CalendarDayBitsRow(TypedDict):
     day_bits: str
 
+class AgencyValidationIssueRow(TypedDict):
+    agency_id: str
+    issue: str
+
