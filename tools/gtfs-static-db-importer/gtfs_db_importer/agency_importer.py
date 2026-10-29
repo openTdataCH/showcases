@@ -62,6 +62,8 @@ class AgencyImporter:
 
         # Create one link_agency row per agency, then combine its routes' day bits.
         self._populate_agency_gtfs_rt()
+        self._update_agency_day_bits()
+
         log_message('DONE import agency')
         print()
 
@@ -112,7 +114,7 @@ class AgencyImporter:
         log_message(f'... DONE')
         print()
 
-    def update_agency_day_bits(self):
+    def _update_agency_day_bits(self):
         log_message('START update link_agency day_bits')
 
         sql_path = self._context.map_sql_queries['select_agency_routes_day_bits']
