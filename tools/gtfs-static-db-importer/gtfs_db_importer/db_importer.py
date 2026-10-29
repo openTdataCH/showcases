@@ -74,6 +74,7 @@ class GTFS_DB_Importer:
         
         self._trips_importer.import_trips()
         self._routes_importer.import_routes()
+        self._agency_importer.import_agency()
         self._csv_importer.import_csv_tables()
 
         self._agency_importer.populate_agency_gtfs_rt()
