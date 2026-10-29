@@ -1,4 +1,5 @@
 import csv
+from contextlib import closing
 from pathlib import Path
 from typing import cast
 
@@ -10,6 +11,7 @@ from .helpers.file_helpers import compute_file_rows_no
 from .helpers.log_helpers import log_message
 from .helpers.db_helpers import load_sql_from_file
 from .import_context import ImportContext
+from .import_types import AgencyValidationIssueRow
 
 
 class AgencyImporter:
@@ -63,6 +65,7 @@ class AgencyImporter:
         # Create one link_agency row per agency, then combine its routes' day bits.
         self._populate_agency_gtfs_rt()
         self._update_agency_day_bits()
+        self._check_link_agency()
 
         log_message('DONE import agency')
         print()
@@ -152,3 +155,52 @@ class AgencyImporter:
 
         log_message('DONE update link_agency day_bits')
         print('')
+
+    def _check_link_agency(self):
+        log_message('START check link_agency')
+        sql = '''
+            -- Check every agency has exactly one matching link_agency row.
+            -- LEFT JOIN keeps agencies without links; COUNT is zero for those agencies.
+            SELECT agency.agency_id, 'expected exactly one link_agency row' AS issue
+            FROM agency
+            LEFT JOIN link_agency ON link_agency.agency_id = agency.agency_id
+            GROUP BY agency.agency_id
+            HAVING COUNT(link_agency.agency_id) != 1
+            UNION ALL
+
+            -- Check for link_agency rows whose agency_id does not exist in agency.
+            -- A missing match produces a NULL agency.agency_id.
+            SELECT link_agency.agency_id, 'no matching agency' AS issue
+            FROM link_agency
+            LEFT JOIN agency ON agency.agency_id = link_agency.agency_id
+            WHERE agency.agency_id IS NULL
+            UNION ALL
+
+            -- Check day_bits is present and has one character per day in the import range.
+            -- GLOB matches any value containing a character other than 0 or 1.
+            SELECT agency_id, 'day_bits missing, invalid, or wrong length' AS issue
+            FROM link_agency
+            WHERE day_bits IS NULL
+                OR LENGTH(day_bits) != :days_no
+                OR day_bits GLOB '*[^01]*'
+            UNION ALL
+
+            -- Check every link_agency row has a realtime availability value.
+            SELECT agency_id, 'has_gtfs_rt is NULL' AS issue
+            FROM link_agency
+            WHERE has_gtfs_rt IS NULL
+            -- UNION ALL combines all problems; return only one for the Python exception.
+            LIMIT 1
+        '''
+        with closing(self._context.db_engine.get_cursor()) as db_cursor:
+            db_cursor.execute(sql, {'days_no': self._context.calendar_data['days_no']})
+            db_row = db_cursor.fetchone()
+        # with
+        
+        if db_row is not None:
+            invalid_row = cast(AgencyValidationIssueRow, db_row)
+            agency_id = invalid_row['agency_id']
+            issue = invalid_row['issue']
+            raise ValueError(f'Invalid link_agency for agency {agency_id}: {issue}')
+        log_message('DONE check link_agency')
+        print()
