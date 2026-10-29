@@ -1,3 +1,4 @@
+import csv
 from pathlib import Path
 from typing import cast
 
@@ -5,6 +6,7 @@ from .controllers.bo_controller import BusinessOrganisationGtfsRtCsvRow
 from .models.gtfs.agency import AgencyDB
 from .helpers.csv_helpers import read_csv_rows
 from .helpers.csv_updater import CSV_Updater
+from .helpers.file_helpers import compute_file_rows_no
 from .helpers.log_helpers import log_message
 from .helpers.db_helpers import load_sql_from_file
 from .import_context import ImportContext
@@ -13,6 +15,52 @@ from .import_context import ImportContext
 class AgencyImporter:
     def __init__(self, context: ImportContext):
         self._context = context
+
+    def import_agency(self):
+        log_message('START import agency')
+        agency_path = self._context.gtfs_folder_path / 'agency.txt'
+        log_message(f'Reading {agency_path}')
+        total_rows = compute_file_rows_no(agency_path) - 1
+        if total_rows < 0:
+            total_rows = 0
+        formatted_total_rows = f'{total_rows:,}'.replace(',', "'")
+        log_message(f'Found {formatted_total_rows} agency rows')
+
+        agency_writer = self._context.db_engine.create_csv_writer('agency')
+        row_count = 0
+        kept_rows = 0
+        try:
+            with agency_path.open('r', encoding='utf-8-sig', newline='') as csv_file:
+                csv_reader = csv.DictReader(csv_file)
+                for agency_row in csv_reader:
+                    if row_count % 10_000 == 0:
+                        formatted_row_count = f'{row_count:,}'.replace(',', "'")
+                        formatted_kept_rows = f'{kept_rows:,}'.replace(',', "'")
+                        log_message(
+                            f'... parsed {formatted_row_count} / {formatted_total_rows} agency rows; '
+                            f'kept {formatted_kept_rows}'
+                        )
+
+                    agency_writer.prepare_row(agency_row)
+                    kept_rows += 1
+                    row_count += 1
+                # loop agency.txt CSV rows
+            # with
+        finally:
+            agency_writer.close()
+
+        formatted_row_count = f'{row_count:,}'.replace(',', "'")
+        formatted_kept_rows = f'{kept_rows:,}'.replace(',', "'")
+        log_message(
+            f'Parsed {formatted_row_count} / {formatted_total_rows} agency rows; '
+            f'kept {formatted_kept_rows}'
+        )
+        self._context.db_engine.drop_and_recreate_table('agency')
+        self._context.db_engine.load_csv_into_table('agency', agency_writer.csv_path)
+        self._context.db_engine.add_table_indexes('agency')
+        log_message(f'Imported {formatted_kept_rows} / {formatted_row_count} agency rows')
+        log_message('DONE import agency')
+        print()
 
     def populate_agency_gtfs_rt(self):
         log_message(f'START populate GTFS-RT status')
