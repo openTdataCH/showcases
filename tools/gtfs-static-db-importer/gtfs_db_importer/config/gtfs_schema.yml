@@ -63,9 +63,9 @@ tables:
 
   link_agency:
     columns:
-      - agency_id TEXT PRIMARY KEY
-      - has_gtfs_rt INTEGER
-      - day_bits TEXT # similar with HRDF
+      - agency_id TEXT PRIMARY KEY NOT NULL
+      - has_gtfs_rt INTEGER NOT NULL
+      - day_bits TEXT NOT NULL CHECK (LENGTH(TRIM(day_bits)) > 0) # similar with HRDF
     indexes:
       - has_gtfs_rt
 
