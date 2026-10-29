@@ -89,13 +89,17 @@ class AgencyImporter:
         table_name = 'link_agency'
         self._context.db_engine.drop_and_recreate_table(table_name)
         table_csv_writer = self._context.db_engine.create_csv_writer(table_name)
+        empty_day_bits = '0' * self._context.calendar_data['days_no']
 
         for agency_id, agency in map_gtfs_agency.items():
-            has_gtfs_rt = 1 if agency_id in map_gtfs_rt_agency_ids else 0
+            has_gtfs_rt = 0
+            if agency_id in map_gtfs_rt_agency_ids:
+                has_gtfs_rt = 1
 
             row_dict = {
                 'agency_id': agency_id,
                 'has_gtfs_rt': has_gtfs_rt,
+                'day_bits': empty_day_bits,
             }
             table_csv_writer.prepare_row(row_dict)
         # loop agencies
