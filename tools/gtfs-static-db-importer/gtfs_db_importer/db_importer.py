@@ -15,6 +15,7 @@ from .agency_importer import AgencyImporter
 from .stops_importer import StopsImporter
 from .stations_importer import StationsImporter
 from .trips_importer import TripsImporter
+from .stop_times_importer import StopTimesImporter
 from .frequencies_importer import FrequenciesImporter
 from .routes_importer import RoutesImporter
 
@@ -52,6 +53,7 @@ class GTFS_DB_Importer:
         self._stops_importer = StopsImporter(context)
         self._stations_importer = StationsImporter(context)
         self._trips_importer = TripsImporter(context)
+        self._stop_times_importer = StopTimesImporter(context)
         self._frequencies_importer = FrequenciesImporter(context)
         self._routes_importer = RoutesImporter(context)
 
@@ -75,6 +77,7 @@ class GTFS_DB_Importer:
         self._trips_importer.import_trips()
         self._routes_importer.import_routes()
         self._agency_importer.import_agency()
+        self._stop_times_importer.import_stop_times()
         self._csv_importer.import_csv_tables()
 
         self._agency_importer.populate_agency_gtfs_rt()
