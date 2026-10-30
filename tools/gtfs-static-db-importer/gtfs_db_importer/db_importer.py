@@ -20,6 +20,7 @@ from .stop_times_importer import StopTimesImporter
 from .frequencies_importer import FrequenciesImporter
 from .routes_importer import RoutesImporter
 from .transfers_importer import TransfersImporter
+from .shapes_importer import ShapesImporter
 
 
 class GTFS_DB_Importer:
@@ -60,6 +61,7 @@ class GTFS_DB_Importer:
         self._frequencies_importer = FrequenciesImporter(context)
         self._routes_importer = RoutesImporter(context)
         self._transfers_importer = TransfersImporter(context)
+        self._shapes_importer = ShapesImporter(context)
 
     def start(self):
         log_message("START GTFS IMPORT")
@@ -109,6 +111,8 @@ class GTFS_DB_Importer:
         
         self._routes_importer.update_routes_representative_trip()
         self._routes_importer.create_fts_routes()
+
+        self._shapes_importer.import_shapes()
         
         self._cleanup()
         
