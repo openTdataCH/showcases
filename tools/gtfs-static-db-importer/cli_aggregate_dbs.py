@@ -5,18 +5,20 @@ from pathlib import Path
 from typing import Any, Dict, List
 from datetime import datetime
 
-from inc.shared.inc.helpers.config_helpers import load_convenience_config, load_yaml_config
-from inc.shared.inc.models.gtfs_static_db_catalog import GTFS_Static_Catalog_Report, GTFS_Static_Catalog_Item
-from inc.shared.inc.models.ckan_data import CKAN_Data, CKAN_Resource
-from inc.shared.inc.helpers.json_helpers import export_json_to_file, load_json_from_file
-from inc.shared.inc.helpers.gtfs_helpers import compute_date_from_gtfs_db_filename, compute_gtfs_day_from_resource_path, compute_gtfs_dt_from_resource_path
-from inc.shared.inc.helpers.db_engine import SQLiteDBEngine
+from gtfs_db_importer.helpers.config_helpers import load_yaml_config
+from gtfs_db_importer.models.gtfs_static_db_catalog import GTFS_Static_Catalog_Report, GTFS_Static_Catalog_Item
+from gtfs_db_importer.models.ckan_data import CKAN_Data, CKAN_Resource
+from gtfs_db_importer.helpers.json_helpers import export_json_to_file, load_json_from_file
+from gtfs_db_importer.helpers.gtfs_helpers import compute_date_from_gtfs_db_filename, compute_gtfs_day_from_resource_path, compute_gtfs_dt_from_resource_path
+from gtfs_db_importer.helpers.db_engine import SQLiteDBEngine
 
-from inc.shared.inc.helpers.log_helpers import log_message
+from gtfs_db_importer.helpers.log_helpers import log_message
 
 def main():
     script_path = Path(os.path.realpath(__file__))
-    app_config = load_convenience_config(script_path)
+    script_parent_path = script_path.parent
+    config_path = script_parent_path / 'gtfs_db_importer/config.yml'
+    app_config = load_yaml_config(config_path, script_parent_path)
 
     _process(app_config)
 

@@ -1,5 +1,7 @@
-import os
-import sys
+import os, sys
+
+import shlex
+import subprocess
 
 from pathlib import Path
 from .shared.inc.helpers.json_helpers import load_json_from_file
@@ -11,11 +13,12 @@ def fetch_latest_resource(script_path: Path, package_id: str):
     # fetch latest archive
     python_path = f'{script_path.parent}/../ckan-utils/.venv/bin/python3'
     ckan_fetch_cli_path = f'{script_path.parent}/../ckan-utils/fetch_package_cli.py'
-    ckan_fetch_sh = f'{python_path} {ckan_fetch_cli_path} --package_id {package_id}'
+    fetch_command = [python_path, ckan_fetch_cli_path, '--package_id', package_id]
+    fetch_command_s = shlex.join(fetch_command)
     
     print('STEP 1 - FETCH LATEST ARCHIVE')
-    print(ckan_fetch_sh, flush=True)
-    os.system(ckan_fetch_sh)
+    print(fetch_command_s, flush=True)
+    subprocess.run(fetch_command, check=True)
     
 def compute_ckan_data(app_config, package_id: str):
     ckan_metadata_path: str = app_config['resource_paths']['ckan_metadata_path']

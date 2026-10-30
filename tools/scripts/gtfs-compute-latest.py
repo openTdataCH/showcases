@@ -1,5 +1,8 @@
 import os, sys
 
+import shlex
+import subprocess
+
 from pathlib import Path
 
 from inc.shared.inc.helpers.config_helpers import load_convenience_config
@@ -47,11 +50,12 @@ def _db_import(app_config, script_path: Path, gtfs_data_path):
     else:
         python_path = f'{script_path.parent}/../gtfs-static-db-importer/.venv/bin/python3'
         import_cli_path = f'{script_path.parent}/../gtfs-static-db-importer/gtfs_db_importer_cli.py'
-        import_sh = f'{python_path} {import_cli_path} --gtfs-folder-path {gtfs_data_path}'
+        import_command = [python_path, import_cli_path, '--gtfs-folder-path', str(gtfs_data_path)]
+        import_command_s = shlex.join(import_command)
         print()
-        print(f'$ {import_sh}', flush=True)
+        print(f'$ {import_command_s}', flush=True)
         print()
-        os.system(import_sh)
+        subprocess.run(import_command, check=True)
 
     return gtfs_db_path
 
@@ -61,11 +65,12 @@ def _dbs_aggregate(script_path):
     
     python_path = f'{script_path.parent}/../gtfs-static-db-importer/.venv/bin/python3'
     cli_path = f'{script_path.parent}/../gtfs-static-db-importer/cli_aggregate_dbs.py'
-    cli_sh = f'{python_path} {cli_path}'
+    catalog_command = [python_path, cli_path]
+    catalog_command_s = shlex.join(catalog_command)
     print()
-    print(f'$ {cli_sh}', flush=True)
+    print(f'$ {catalog_command_s}', flush=True)
     print()
-    os.system(cli_sh)
+    subprocess.run(catalog_command, check=True)
 
 if __name__ == "__main__":
     main()

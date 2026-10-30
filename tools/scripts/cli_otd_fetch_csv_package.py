@@ -5,6 +5,8 @@ from pathlib import Path
 from typing import Any, List
 
 import argparse
+import shlex
+import subprocess
 
 from inc.shared.inc.helpers.config_helpers import load_convenience_config
 
@@ -58,12 +60,13 @@ def _run_package(script_path: Path, app_config: Any, package_id: str, overwrite:
 def _fetch_metadata(script_path: Path, package_id: str):
     ckan_fetch_cli_path = f'{script_path.parent}/../ckan-utils/fetch_metadata_cli.py'
     python_path = f'{script_path.parent}/../ckan-utils/.venv/bin/python3'
-    ckan_fetch_sh = f'{python_path} {ckan_fetch_cli_path} --package_id {package_id}'
+    fetch_command = [python_path, ckan_fetch_cli_path, '--package_id', package_id]
+    fetch_command_s = shlex.join(fetch_command)
     
     print('')
     print(f'STEP {package_id}.1 - FETCH METADATA')
-    print(ckan_fetch_sh, flush=True)
-    os.system(ckan_fetch_sh)
+    print(fetch_command_s, flush=True)
+    subprocess.run(fetch_command, check=True)
     
     print()
     
@@ -72,36 +75,44 @@ def _fetch_resource(script_path: Path, app_config, package_id: str, overwrite: b
     if file_prefix_config is None:
         _fetch_latest_resource(script_path, package_id, overwrite)
     else:
-        file_prefixes = file_prefix_config if isinstance(file_prefix_config, list) else [file_prefix_config]
+        if isinstance(file_prefix_config, list):
+            file_prefixes = file_prefix_config
+        else:
+            file_prefixes = [file_prefix_config]
         _fetch_resource_by_prefix(app_config, script_path, package_id, file_prefixes, overwrite)
     #
 
 def _fetch_latest_resource(script_path: Path, package_id: str, overwrite: bool):
-    overwrite_s = '--overwrite' if overwrite else ''
-    
     # fetch latest archive
     ckan_fetch_cli_path = f'{script_path.parent}/../ckan-utils/fetch_package_cli.py'
     python_path = f'{script_path.parent}/../ckan-utils/.venv/bin/python3'
-    ckan_fetch_sh = f'{python_path} {ckan_fetch_cli_path} --package_id {package_id} {overwrite_s}'
+    fetch_command = [python_path, ckan_fetch_cli_path, '--package_id', package_id]
+    if overwrite:
+        fetch_command.append('--overwrite')
+    fetch_command_s = shlex.join(fetch_command)
     
     print(f'STEP {package_id}.2 - FETCH LATEST RESOURCE')
-    print(ckan_fetch_sh, flush=True)
-    os.system(ckan_fetch_sh)
+    print(fetch_command_s, flush=True)
+    subprocess.run(fetch_command, check=True)
     
 def _fetch_resource_by_prefix(app_config: Any, script_path: Path, package_id: str, resource_prefixes: List[str], overwrite: bool):
-    overwrite_s = '--overwrite' if overwrite else ''
-    
     for resource_prefix in resource_prefixes:
         ckan_resource = compute_ckan_resource_by_prefix(app_config, package_id, resource_prefix)
     
         # fetch latest archive
         ckan_fetch_cli_path = f'{script_path.parent}/../ckan-utils/fetch_package_cli.py'
         python_path = f'{script_path.parent}/../ckan-utils/.venv/bin/python3'
-        ckan_fetch_sh = f'{python_path} {ckan_fetch_cli_path} --package_id {package_id} --resource_title {ckan_resource.identifier} {overwrite_s}'
+        fetch_command = [
+            python_path, ckan_fetch_cli_path, '--package_id', package_id,
+            '--resource_title', ckan_resource.identifier,
+        ]
+        if overwrite:
+            fetch_command.append('--overwrite')
+        fetch_command_s = shlex.join(fetch_command)
     
         print(f'STEP {package_id}.2 - FETCH RESOURCE by PREFIX {ckan_resource.identifier}')
-        print(ckan_fetch_sh, flush=True)
-        os.system(ckan_fetch_sh)
+        print(fetch_command_s, flush=True)
+        subprocess.run(fetch_command, check=True)
     # loop
 
     print()
