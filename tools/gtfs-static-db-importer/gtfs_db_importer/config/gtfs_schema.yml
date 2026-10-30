@@ -1,5 +1,15 @@
 # https://opentransportdata.swiss/de/cookbook/timetable-cookbook/gtfs/
 tables:
+  # One row describing the source feed and import timing; filter bounds are in feed_info.
+  metadata_import:
+    columns:
+      - id INTEGER PRIMARY KEY CHECK (id = 1) # fixed ID for the single import record
+      - source_folder TEXT NOT NULL # original GTFS input folder
+      - source_feed_start_date TEXT NOT NULL # original feed_info date, YYYYMMDD
+      - source_feed_end_date TEXT NOT NULL # original feed_info date, YYYYMMDD
+      - import_start TEXT NOT NULL # timestamp when the import started, ISO 8601 with timezone
+      - import_end TEXT # timestamp when the import finished; NULL until completion
+
   agency:
     columns:
       - agency_id TEXT PRIMARY KEY
