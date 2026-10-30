@@ -18,6 +18,7 @@ from .trips_importer import TripsImporter
 from .stop_times_importer import StopTimesImporter
 from .frequencies_importer import FrequenciesImporter
 from .routes_importer import RoutesImporter
+from .transfers_importer import TransfersImporter
 
 
 class GTFS_DB_Importer:
@@ -56,6 +57,7 @@ class GTFS_DB_Importer:
         self._stop_times_importer = StopTimesImporter(context)
         self._frequencies_importer = FrequenciesImporter(context)
         self._routes_importer = RoutesImporter(context)
+        self._transfers_importer = TransfersImporter(context)
 
     def start(self):
         log_message("START GTFS IMPORT")
@@ -90,6 +92,8 @@ class GTFS_DB_Importer:
         # Build stations from the full stop catalogue, then derive availability from retained trips.
         self._stations_importer.populate_stations()
         self._stations_importer.update_stations_day_bits()
+        
+        self._transfers_importer.import_transfers()
         self._routes_importer.update_routes_representative_trip()
         self._routes_importer.create_fts_routes()
         
