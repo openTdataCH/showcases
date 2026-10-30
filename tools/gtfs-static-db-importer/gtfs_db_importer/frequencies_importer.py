@@ -1,6 +1,8 @@
+import csv
 from pathlib import Path
 
 from .helpers.csv_updater import CSV_Updater
+from .helpers.file_helpers import compute_file_rows_no
 
 from .helpers.gtfs_helpers import convert_datetime_to_day_minutes, extract_stop_times_data_from_s, seconds_to_hhmmss
 from .helpers.log_helpers import log_message
@@ -13,6 +15,58 @@ class FrequenciesImporter:
         self._context = context
 
     def update_frequencies(self):
+    def import_frequencies(self):
+        log_message('START import frequencies')
+        frequencies_path = self._context.gtfs_folder_path / 'frequencies.txt'
+        frequencies_writer = self._context.db_engine.create_csv_writer('frequencies')
+        row_count = 0
+        kept_rows = 0
+        try:
+            if frequencies_path.is_file():
+                log_message(f'Reading {frequencies_path}')
+                total_rows = compute_file_rows_no(frequencies_path) - 1
+                if total_rows < 0:
+                    total_rows = 0
+                formatted_total_rows = f'{total_rows:,}'.replace(',', "'")
+                log_message(f'Found {formatted_total_rows} frequencies rows')
+                with frequencies_path.open('r', encoding='utf-8-sig', newline='') as csv_file:
+                    csv_reader = csv.DictReader(csv_file)
+                    for frequency_row in csv_reader:
+                        if row_count % 50_000 == 0:
+                            formatted_row_count = f'{row_count:,}'.replace(',', "'")
+                            formatted_kept_rows = f'{kept_rows:,}'.replace(',', "'")
+                            log_message(
+                                f'... parsed {formatted_row_count} / {formatted_total_rows} frequencies rows; '
+                                f'kept {formatted_kept_rows}'
+                            )
+
+                        # Keep only frequency definitions for retained trips.
+                        if frequency_row['trip_id'] in self._context.active_trip_ids:
+                            frequencies_writer.prepare_row(frequency_row)
+                            kept_rows += 1
+                        row_count += 1
+                    # loop frequencies.txt CSV rows
+                # with
+                formatted_row_count = f'{row_count:,}'.replace(',', "'")
+                formatted_kept_rows = f'{kept_rows:,}'.replace(',', "'")
+                log_message(
+                    f'Parsed {formatted_row_count} / {formatted_total_rows} frequencies rows; '
+                    f'kept {formatted_kept_rows}'
+                )
+            else:
+                log_message('No frequencies.txt present; creating an empty frequencies table')
+        finally:
+            frequencies_writer.close()
+
+        self._context.db_engine.drop_and_recreate_table('frequencies')
+        self._context.db_engine.load_csv_into_table('frequencies', frequencies_writer.csv_path)
+        self._context.db_engine.add_table_indexes('frequencies')
+        formatted_row_count = f'{row_count:,}'.replace(',', "'")
+        formatted_kept_rows = f'{kept_rows:,}'.replace(',', "'")
+        log_message(f'Imported {formatted_kept_rows} / {formatted_row_count} frequencies rows')
+
+        log_message('DONE import frequencies')
+        print()
         '''
         INSERT into trips, stop_times from frequencies.txt
         '''
