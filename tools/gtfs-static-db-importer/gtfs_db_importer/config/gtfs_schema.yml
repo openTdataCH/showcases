@@ -119,8 +119,10 @@ tables:
   stop_times:
     columns:
       - trip_id TEXT
-      - arrival_time TEXT
-      - departure_time TEXT
+      - definition: arrival_time TEXT
+        value_if_blank: null
+      - definition: departure_time TEXT
+        value_if_blank: null
       - stop_id TEXT NOT NULL
       - stop_sequence INTEGER NOT NULL
       - pickup_type INTEGER
