@@ -11,6 +11,7 @@ from .import_context import ImportContext
 from .date_range import resolve_import_date_range
 from .csv_importer import CSVImporter
 from .calendar_importer import CalendarImporter
+from .feed_info_importer import FeedInfoImporter
 from .agency_importer import AgencyImporter
 from .stops_importer import StopsImporter
 from .stations_importer import StationsImporter
@@ -50,6 +51,7 @@ class GTFS_DB_Importer:
         )
         self._csv_importer = CSVImporter(context)
         self._calendar_importer = CalendarImporter(context)
+        self._feed_info_importer = FeedInfoImporter(context)
         self._agency_importer = AgencyImporter(context)
         self._stops_importer = StopsImporter(context)
         self._stations_importer = StationsImporter(context)
@@ -75,6 +77,7 @@ class GTFS_DB_Importer:
 
         # calendar
         self._calendar_importer.log_date_range()
+        self._feed_info_importer.import_feed_info()
         self._calendar_importer.import_calendar()
         
         # trips
