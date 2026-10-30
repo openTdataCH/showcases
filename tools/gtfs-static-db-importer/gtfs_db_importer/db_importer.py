@@ -89,7 +89,7 @@ class GTFS_DB_Importer:
         # trips
         self._trips_importer.import_trips()
 
-        # routes, agency
+        # routes, agency, link_agency
         self._routes_importer.import_routes()
         self._agency_importer.import_agency()
 
