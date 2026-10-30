@@ -218,28 +218,35 @@ class TripsImporter:
         print('')
 
     def check_trips_day_minutes(self):
-        log_message('START check trips day minutes')
+        log_message('START check trips times and day minutes')
 
-        missing_minutes_condition = 'departure_day_minutes = -1 OR arrival_day_minutes = -1'
+        missing_times_condition = '''
+            departure_time IS NULL OR LENGTH(TRIM(departure_time)) = 0
+            OR arrival_time IS NULL OR LENGTH(TRIM(arrival_time)) = 0
+            OR departure_day_minutes IS NULL OR departure_day_minutes = -1
+            OR arrival_day_minutes IS NULL OR arrival_day_minutes = -1
+        '''
         db_cursor = self._context.db_engine.get_cursor()
         try:
-            db_cursor.execute(f'SELECT COUNT(*) AS trips_count FROM trips WHERE {missing_minutes_condition}')
+            db_cursor.execute(f'SELECT COUNT(*) AS trips_count FROM trips WHERE {missing_times_condition}')
             count_row = cast(MissingTripMinutesCountRow, db_cursor.fetchone())
             missing_trips_count = count_row['trips_count']
 
             if missing_trips_count > 0:
-                db_cursor.execute(f'SELECT trip_id FROM trips WHERE {missing_minutes_condition} LIMIT 5')
+                db_cursor.execute(f'SELECT trip_id FROM trips WHERE {missing_times_condition} LIMIT 5')
                 trip_ids = []
                 for db_row in db_cursor:
                     trip_row = cast(TripIdRow, db_row)
                     trip_ids.append(trip_row['trip_id'])
                 trip_ids_s = ', '.join(trip_ids)
+                formatted_missing_trips_count = f'{missing_trips_count:,}'.replace(',', "'")
                 raise ValueError(
-                    f'{missing_trips_count} trips still have departure_day_minutes or arrival_day_minutes '
-                    f'set to -1 after updating trips. Example trip IDs: {trip_ids_s}'
+                    f'{formatted_missing_trips_count} trips have missing departure_time/arrival_time '
+                    f'or NULL/-1 departure_day_minutes/arrival_day_minutes after updating trips. '
+                    f'Example trip IDs: {trip_ids_s}'
                 )
         finally:
             db_cursor.close()
 
-        log_message('DONE check trips day minutes')
+        log_message('DONE check trips times and day minutes')
         print('')
