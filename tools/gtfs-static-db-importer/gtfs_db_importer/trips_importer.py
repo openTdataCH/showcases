@@ -207,6 +207,8 @@ class TripsImporter:
         log_message(f'... START UPDATE stop_times reset from/to NULL')
 
         for time_type, stop_times_updater in map_stop_times_reset_table.items():
+            # Flush all endpoint row IDs before reading the CSV for the SQL update.
+            stop_times_updater.close()
             template_sql_path = self._context.map_sql_queries['update_stop_times_reset']
             template_sql = load_sql_from_file(template_sql_path)
             template_sql = template_sql.replace('[COLUMN_TO_RESET]', time_type)
