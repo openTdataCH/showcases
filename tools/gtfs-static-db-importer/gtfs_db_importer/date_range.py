@@ -20,6 +20,12 @@ def resolve_import_date_range(gtfs_folder_path: Path, from_date: Optional[dateti
     feed_end = datetime.datetime.strptime(feed_row['feed_end_date'], '%Y%m%d')
     if feed_start > feed_end:
         raise ValueError('feed_start_date must be on or before feed_end_date')
+    feed_range_days = (feed_end - feed_start).days
+    if feed_range_days > 500:
+        raise ValueError(
+            f'feed_info date range exceeds 500 days: {feed_start:%Y-%m-%d} - {feed_end:%Y-%m-%d} '
+            f'({feed_range_days} days)'
+        )
 
     start_date = feed_start
     if from_date is not None:
