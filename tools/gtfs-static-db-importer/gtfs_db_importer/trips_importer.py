@@ -88,6 +88,8 @@ class TripsImporter:
         '''
         - DROP trips
         - batch INSERT trips with new columns (departure_ / arrival_ , stop_times_s)
+        
+        - batch UPDATE stop_times with arrival_time, departure_time = NULL for endpoints
         '''
         log_message('START update trips/stop_times')
 
