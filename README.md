@@ -17,6 +17,7 @@ Repository structure:
 | GTFS Datasets Compare <br/> [./tools/gtfs-hrdf-compare/](./tools/gtfs-prev-compare/) | CLI tool that compares 2 GTFS datasets <br/> https://github.com/openTdataCH/showcases/blob/develop/tools/gtfs-prev-compare |
 | GTFS-RT - GTFS-static compare <br/> [./tools/gtfs-rt-static-compare/](./tools/gtfs-rt-static-compare/) | CLI tool that compares GTFS-static and GTFS-RT datasets <br/> https://github.com/openTdataCH/showcases/tree/develop/tools/gtfs-rt-static-compare |
 | GTFS-static DB importer <br/> [./tools/gtfs-static-db-importer/](./tools/gtfs-static-db-importer/) | Tool that ingests a given GTFS-static dataset into a SQLite DB <br/> https://github.com/openTdataCH/showcases/tree/develop/tools/gtfs-static-db-importer |
+| GTFS merger <br/> [./tools/gtfs-merger/](./tools/gtfs-merger/) | CLI tool that merges two GTFS datasets into one GTFS folder |
 
 ## HRDF Apps & Tools
 
