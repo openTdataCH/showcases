@@ -84,7 +84,7 @@ class TripsImporter:
         log_message('DONE import trips')
         print()
 
-    def update_trips(self):
+    def update_trips_stop_times(self):
         '''
         - DROP trips
         - batch INSERT trips with new columns (departure_ / arrival_ , stop_times_s)

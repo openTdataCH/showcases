@@ -78,6 +78,9 @@ class GTFS_DB_Importer:
         self._routes_importer.import_routes()
         self._agency_importer.import_agency()
         self._stop_times_importer.import_stop_times()
+
+        # Calculate trip times and condensed stop times, and clear endpoint arrival/departure values.
+        self._trips_importer.update_trips_stop_times()
         self._csv_importer.import_csv_tables()
 
         self._agency_importer.populate_agency_gtfs_rt()
