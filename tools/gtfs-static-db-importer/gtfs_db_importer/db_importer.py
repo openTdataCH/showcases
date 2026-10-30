@@ -79,6 +79,9 @@ class GTFS_DB_Importer:
         self._trips_importer.import_trips()
         self._routes_importer.import_routes()
         self._agency_importer.import_agency()
+
+        # stops
+        self._stops_importer.import_stops()
         self._stop_times_importer.import_stop_times()
 
         # Calculate trip times and condensed stop times, and clear endpoint arrival/departure values.
@@ -86,10 +89,8 @@ class GTFS_DB_Importer:
         self._trips_importer.check_trips_day_minutes()
         
         self._frequencies_importer.import_frequencies()
-        
-        self._stops_importer.import_stops()
 
-        # Build stations from the full stop catalogue, then derive availability from retained trips.
+        # update stations, stop.day_bits
         self._stations_importer.populate_stations()
         self._stations_importer.update_stations_day_bits()
         
