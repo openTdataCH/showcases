@@ -150,6 +150,7 @@ tables:
       - to_trip_id TEXT
       - transfer_type INTEGER NOT NULL
       - min_transfer_time INTEGER
+      - service_id TEXT
     indexes:
       - from_stop_id
       - to_stop_id
@@ -158,6 +159,7 @@ tables:
       - from_trip_id
       - to_trip_id
       - transfer_type
+      - service_id
     keys:
       - FOREIGN KEY (from_stop_id) REFERENCES stops(stop_id)
       - FOREIGN KEY (to_stop_id) REFERENCES stops(stop_id)
