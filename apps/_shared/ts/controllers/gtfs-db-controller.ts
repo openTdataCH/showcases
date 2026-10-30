@@ -26,8 +26,12 @@ export class GTFS_DB_Controller {
 
     this.mapRoutes = {};
     lookupJSON.routes.rows.forEach(itemJSON => {
-      const route = Route.initFromJSON(itemJSON, this.mapAgency);
-      this.mapRoutes[route.route_id] = route;
+      try {
+        const route = Route.initFromJSON(itemJSON, this.mapAgency);
+        this.mapRoutes[route.route_id] = route;
+      } catch (error) {
+        console.log('Route cannot be initialized', itemJSON, error);
+      }
     });
 
     this.mapStops = {};
