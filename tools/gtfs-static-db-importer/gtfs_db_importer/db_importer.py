@@ -73,28 +73,37 @@ class GTFS_DB_Importer:
         
         self._write_lock_file()
 
+        # calendar
         self._calendar_importer.log_date_range()
         self._calendar_importer.import_calendar()
         
+        # trips
         self._trips_importer.import_trips()
+
+        # routes, agency
         self._routes_importer.import_routes()
         self._agency_importer.import_agency()
 
         # stops
         self._stops_importer.import_stops()
+
+        # stop_times
         self._stop_times_importer.import_stop_times()
 
-        # Calculate trip times and condensed stop times, and clear endpoint arrival/departure values.
+        # update trips, stop_times
         self._trips_importer.update_trips_stop_times()
         self._trips_importer.check_trips_day_minutes()
-        
+
+        # frequencies
         self._frequencies_importer.import_frequencies()
 
         # update stations, stop.day_bits
         self._stations_importer.populate_stations()
         self._stations_importer.update_stations_day_bits()
-        
+
+        # transfers
         self._transfers_importer.import_transfers()
+        
         self._routes_importer.update_routes_representative_trip()
         self._routes_importer.create_fts_routes()
         
