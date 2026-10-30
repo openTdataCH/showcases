@@ -84,19 +84,12 @@ class GTFS_DB_Importer:
         self._trips_importer.check_trips_day_minutes()
         
         self._frequencies_importer.import_frequencies()
-        self._csv_importer.import_csv_tables()
+        
+        self._stops_importer.import_stops()
 
-        self._agency_importer.populate_agency_gtfs_rt()
-        self._stops_importer.check_stops_parent_depth()
-        self._stops_importer.check_stops_missing_parents()
-
-        self._trips_importer.update_trips()
-        self._trips_importer.check_trips_day_minutes()
-        self._frequencies_importer.update_frequencies()
-        self._routes_importer.update_routes()
+        # Build stations from the full stop catalogue, then derive availability from retained trips.
         self._stations_importer.populate_stations()
         self._stations_importer.update_stations_day_bits()
-        self._agency_importer.update_agency_day_bits()
         self._routes_importer.update_routes_representative_trip()
         self._routes_importer.create_fts_routes()
         
