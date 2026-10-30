@@ -10,7 +10,6 @@ from .helpers.log_helpers import log_message
 from .import_context import ImportContext
 from .import_metadata import ImportMetadata
 from .date_range import resolve_import_date_range
-from .csv_importer import CSVImporter
 from .calendar_importer import CalendarImporter
 from .feed_info_importer import FeedInfoImporter
 from .agency_importer import AgencyImporter
@@ -51,7 +50,6 @@ class GTFS_DB_Importer:
             bo_realtime_csv_path=self._bo_realtime_csv_path,
             calendar_data=calendar_data,
         )
-        self._csv_importer = CSVImporter(context)
         self._calendar_importer = CalendarImporter(context)
         self._feed_info_importer = FeedInfoImporter(context)
         self._agency_importer = AgencyImporter(context)
