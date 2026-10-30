@@ -25,7 +25,7 @@ Usage: `python3 gtfs_db_importer_cli.py [-h] [--gtfs-folder-path GTFS_FOLDER_PAT
 | `--from` |  | Inclusive calendar start date in `YYYYMMDD` or `YYYY-MM-DD` format. Defaults to `feed_info.feed_start_date`. | `2026-12-13` |
 | `--to` |  | Inclusive calendar end date in `YYYYMMDD` or `YYYY-MM-DD` format. Defaults to `feed_info.feed_end_date`. | `2027-12-11` |
 
-Both bounds must be within the dates in `feed_info.txt`, and `--from` must be on or before `--to`. 
+Missing feed date bounds are derived from the earliest/latest dates across `calendar.txt` and `calendar_dates.txt`. If either bound remains unavailable, the import raises before DB creation. The resolved feed range must not exceed 500 days (`end - start`). Both CLI bounds must be within that range, and `--from` must be on or before `--to`.
 
 Example
 
