@@ -14,7 +14,6 @@ class FrequenciesImporter:
     def __init__(self, context: ImportContext):
         self._context = context
 
-    def update_frequencies(self):
     def import_frequencies(self):
         log_message('START import frequencies')
         frequencies_path = self._context.gtfs_folder_path / 'frequencies.txt'
@@ -65,8 +64,13 @@ class FrequenciesImporter:
         formatted_kept_rows = f'{kept_rows:,}'.replace(',', "'")
         log_message(f'Imported {formatted_kept_rows} / {formatted_row_count} frequencies rows')
 
+        # Expand the retained definitions into trips and stop_times using the existing logic.
+        if kept_rows > 0:
+            self._update_frequencies()
         log_message('DONE import frequencies')
         print()
+
+    def _update_frequencies(self):
         '''
         INSERT into trips, stop_times from frequencies.txt
         '''
@@ -93,7 +97,8 @@ class FrequenciesImporter:
         row_id = 1
         for db_row in db_cursor.execute(sql):
             if row_id % 1_000 == 0:
-                log_message(f'... parsed {row_id} rows')
+                formatted_row_id = f'{row_id:,}'.replace(',', "'")
+                log_message(f'... parsed {formatted_row_id} rows')
 
             start_seconds = convert_datetime_to_day_minutes(db_row['start_time']) * 60
             headway_seconds = db_row['headway_secs']
@@ -179,11 +184,14 @@ class FrequenciesImporter:
                 }
 
                 trips_frequencies_csv_updater.prepare_row(new_trip)
+                self._context.active_trip_ids.add(trip_id)
 
                 current_seconds += headway_seconds
                 freq_idx += 1
             # loop frequencies
+            row_id += 1
         # loop DB trips-with-frequencies
+        db_cursor.close()
 
         log_message(f'... saving CSV files')
 
