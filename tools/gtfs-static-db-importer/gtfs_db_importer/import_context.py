@@ -16,3 +16,4 @@ class ImportContext:
         self.active_service_ids: Set[str] = set()
         self.active_trip_ids: Set[str] = set()
         self.active_route_ids: Set[str] = set()
+        self.source_table_rows: Dict[str, int] = {}

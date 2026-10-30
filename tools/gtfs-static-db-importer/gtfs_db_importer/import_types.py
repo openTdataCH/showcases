@@ -58,3 +58,12 @@ class MetadataImportRow(TypedDict):
     import_start: str
     import_end: Optional[str]
 
+class MetadataTableRow(TypedDict):
+    table_name: str
+    source_file_present: int
+    source_rows: int
+    retained_rows: int
+
+class TableRowCountRow(TypedDict):
+    row_count: int
+

@@ -1,10 +1,11 @@
 import csv
 import datetime
 from contextlib import closing
+from typing import cast
 
 from .helpers.log_helpers import log_message
 from .import_context import ImportContext
-from .import_types import MetadataImportRow
+from .import_types import MetadataImportRow, MetadataTableRow, TableRowCountRow
 
 
 class ImportMetadata:
@@ -38,6 +39,43 @@ class ImportMetadata:
             db_cursor.execute(sql, metadata_row)
             db_cursor.connection.commit()
         # with
+
+    def write_table_stats(self):
+        log_message('START write metadata_tables')
+        table_names = [
+            'agency', 'calendar', 'calendar_dates', 'feed_info', 'frequencies',
+            'routes', 'shapes', 'stop_times', 'stops', 'transfers', 'trips',
+        ]
+        self._context.db_engine.drop_and_recreate_table('metadata_tables')
+        insert_sql = '''
+            INSERT INTO metadata_tables (table_name, source_file_present, source_rows, retained_rows)
+            VALUES (:table_name, :source_file_present, :source_rows, :retained_rows)
+        '''
+        with closing(self._context.db_engine.get_cursor()) as db_cursor:
+            for table_name in table_names:
+                source_path = self._context.gtfs_folder_path / f'{table_name}.txt'
+                source_file_present = 0
+                if source_path.is_file():
+                    source_file_present = 1
+
+                # Names come from the fixed list above; count final rows after all generated data.
+                db_cursor.execute(f'SELECT COUNT(*) AS row_count FROM {table_name}')
+                count_row = cast(TableRowCountRow, db_cursor.fetchone())
+                metadata_row: MetadataTableRow = {
+                    'table_name': table_name,
+                    'source_file_present': source_file_present,
+                    'source_rows': self._context.source_table_rows.get(table_name, 0),
+                    'retained_rows': count_row['row_count'],
+                }
+                db_cursor.execute(insert_sql, metadata_row)
+                formatted_source_rows = f"{metadata_row['source_rows']:,}".replace(',', "'")
+                formatted_retained_rows = f"{metadata_row['retained_rows']:,}".replace(',', "'")
+                log_message(f'{table_name}: source {formatted_source_rows}; retained {formatted_retained_rows}')
+            # loop source tables
+            db_cursor.connection.commit()
+        # with
+        log_message('DONE write metadata_tables')
+        print()
 
     def finish_import(self):
         import_end = datetime.datetime.now(datetime.timezone.utc)

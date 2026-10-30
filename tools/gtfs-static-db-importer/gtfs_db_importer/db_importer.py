@@ -117,6 +117,7 @@ class GTFS_DB_Importer:
         self._routes_importer.create_fts_routes()
 
         self._shapes_importer.import_shapes()
+        self._import_metadata.write_table_stats()
         
         self._cleanup()
         self._import_metadata.finish_import()

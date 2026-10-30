@@ -10,6 +10,14 @@ tables:
       - import_start TEXT NOT NULL # timestamp when the import started, ISO 8601 with timezone
       - import_end TEXT # timestamp when the import finished; NULL until completion
 
+  # One row per source GTFS table, describing its original size and final DB row count.
+  metadata_tables:
+    columns:
+      - table_name TEXT PRIMARY KEY NOT NULL # GTFS table name without .txt
+      - source_file_present INTEGER NOT NULL CHECK (source_file_present IN (0, 1))
+      - source_rows INTEGER NOT NULL CHECK (source_rows >= 0) # excludes the CSV header
+      - retained_rows INTEGER NOT NULL CHECK (retained_rows >= 0) # final DB count, including generated rows
+
   agency:
     columns:
       - agency_id TEXT PRIMARY KEY

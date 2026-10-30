@@ -23,6 +23,7 @@ class RoutesImporter:
         total_rows = compute_file_rows_no(routes_path) - 1
         if total_rows < 0:
             total_rows = 0
+        self._context.source_table_rows['routes'] = total_rows
         formatted_total_rows = f'{total_rows:,}'.replace(',', "'")
         log_message(f'Found {formatted_total_rows} routes rows')
 
