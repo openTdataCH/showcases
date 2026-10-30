@@ -19,6 +19,14 @@ class StopMissingParentRow(TypedDict):
     stop_id: str
     parent_station: str
 
+class StopParentDepthRow(TypedDict):
+    stop_id: str
+    parent_stop_id: str
+    grandparent_stop_id: str
+
+class StationCountRow(TypedDict):
+    stations_count: int
+
 class MissingTripMinutesCountRow(TypedDict):
     trips_count: int
 
