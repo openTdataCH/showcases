@@ -1,5 +1,7 @@
 import os, sys
 import json
+import shlex
+import subprocess
 from pathlib import Path
 import urllib.request
 
@@ -33,7 +35,8 @@ def fetch_latest_archive_url(ckan_api_url, ckan_api_authorization):
 
 def run_unzip(archive_path: Path, folder_path: Path):
     print('UNZIP')
-    unzip_sh = f'unzip {archive_path} -d {folder_path}'
-    print(unzip_sh, flush=True)
-    os.system(unzip_sh)
+    unzip_command = ['unzip', str(archive_path), '-d', str(folder_path)]
+    unzip_command_s = shlex.join(unzip_command)
+    print(unzip_command_s, flush=True)
+    subprocess.run(unzip_command, check=True)
     print(f'... done unzip')

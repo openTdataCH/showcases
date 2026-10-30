@@ -1,5 +1,8 @@
 import os, sys
 
+import shlex
+import subprocess
+
 from pathlib import Path
 
 import time
@@ -52,11 +55,12 @@ def _db_import(app_config, script_path, hrdf_data_path):
     else:
         python_path = f'{script_path.parent}/../hrdf-db-importer/.venv/bin/python3'
         hrdf_import_cli_path = f'{script_path.parent}/../hrdf-db-importer/hrdf_db_importer_cli.py'
-        hrdf_import_sh = f'{python_path} {hrdf_import_cli_path} --hrdf-folder-path {hrdf_data_path}'
+        import_command = [python_path, hrdf_import_cli_path, '--hrdf-folder-path', str(hrdf_data_path)]
+        import_command_s = shlex.join(import_command)
         print()
-        print(f'$ {hrdf_import_sh}', flush=True)
+        print(f'$ {import_command_s}', flush=True)
         print()
-        os.system(hrdf_import_sh)
+        subprocess.run(import_command, check=True)
 
     return hrdf_db_path
 
@@ -66,11 +70,12 @@ def _dbs_aggregate(script_path):
     
     python_path = f'{script_path.parent}/../hrdf-db-importer/.venv/bin/python3'
     cli_path = f'{script_path.parent}/../hrdf-db-importer/cli_aggregate_dbs.py'
-    cli_sh = f'{python_path} {cli_path}'
+    catalog_command = [python_path, cli_path]
+    catalog_command_s = shlex.join(catalog_command)
     print()
-    print(f'$ {cli_sh}', flush=True)
+    print(f'$ {catalog_command_s}', flush=True)
     print()
-    os.system(cli_sh)
+    subprocess.run(catalog_command, check=True)
 
 def _hrdf_check_duplicates(script_path, hrdf_db_path):
     hrdf_day = compute_formatted_date_from_hrdf_db_path(hrdf_db_path)
@@ -95,11 +100,12 @@ def _hrdf_check_duplicates(script_path, hrdf_db_path):
     else:
         python_path = f'{script_path.parent}/../hrdf-check-duplicates/.venv/bin/python3'
         tool_cli_path = f'{hrdf_duplicates_tool_folder_path}/hrdf_check_duplicates_cli.py'
-        tool_cli_sh = f"{python_path} {tool_cli_path} \\\n  --hrdf-db-path {hrdf_db_path}"
+        tool_command = [python_path, tool_cli_path, '--hrdf-db-path', str(hrdf_db_path)]
+        tool_command_s = shlex.join(tool_command)
         print()
-        print(f'$ {tool_cli_sh}', flush=True)
+        print(f'$ {tool_command_s}', flush=True)
         print()
-        os.system(tool_cli_sh)
+        subprocess.run(tool_command, check=True)
 
 def _hrdf_build_aggregated_duplicates(script_path):
     print(f'')
@@ -123,11 +129,12 @@ def _hrdf_build_aggregated_duplicates(script_path):
     if run_cli:
         python_path = f'{script_path.parent}/../hrdf-check-duplicates/.venv/bin/python3'
         tool_cli_path = f'{hrdf_duplicates_tool_folder_path}/hrdf_build_consolidated_report_cli.py'
-        tool_cli_sh = f"{python_path} {tool_cli_path}"
+        tool_command = [python_path, tool_cli_path]
+        tool_command_s = shlex.join(tool_command)
         print()
-        print(f'$ {tool_cli_sh}', flush=True)
+        print(f'$ {tool_command_s}', flush=True)
         print()
-        os.system(tool_cli_sh)
+        subprocess.run(tool_command, check=True)
     else:
         print(f'Report already present at path and not too old')
         print(f'=> {report_csv_all_path}')
@@ -143,11 +150,12 @@ def _hrdf_generate_lookups(script_path, hrdf_db_path):
 
     python_path = f'{script_path.parent}/../hrdf-db-importer/.venv/bin/python3'
     tool_cli_path = f'{tool_cli_folder_path}/hrdf_db_lookups_generator_cli.py'
-    tool_cli_sh = f"{python_path} {tool_cli_path} \\\n  --hrdf-db-path {hrdf_db_path}"
+    tool_command = [python_path, tool_cli_path, '--hrdf-db-path', str(hrdf_db_path)]
+    tool_command_s = shlex.join(tool_command)
     print()
-    print(f'$ {tool_cli_sh}', flush=True)
+    print(f'$ {tool_command_s}', flush=True)
     print()
-    os.system(tool_cli_sh)
+    subprocess.run(tool_command, check=True)
     
 if __name__ == "__main__":
     main()
