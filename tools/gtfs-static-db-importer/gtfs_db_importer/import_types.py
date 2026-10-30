@@ -50,3 +50,11 @@ class AgencyValidationIssueRow(TypedDict):
     agency_id: str
     issue: str
 
+class MetadataImportRow(TypedDict):
+    id: int
+    source_folder: str
+    source_feed_start_date: str
+    source_feed_end_date: str
+    import_start: str
+    import_end: Optional[str]
+
