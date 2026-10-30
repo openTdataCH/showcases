@@ -53,8 +53,8 @@ class AgencyValidationIssueRow(TypedDict):
 class MetadataImportRow(TypedDict):
     id: int
     source_folder: str
-    source_feed_start_date: str
-    source_feed_end_date: str
+    source_feed_start_date: Optional[str]
+    source_feed_end_date: Optional[str]
     import_start: str
     import_end: Optional[str]
 

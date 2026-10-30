@@ -19,11 +19,22 @@ class ImportMetadata:
             feed_info_row = next(csv.DictReader(csv_file))
         # with
 
+        source_start = feed_info_row.get('feed_start_date')
+        if source_start is not None:
+            source_start = source_start.strip()
+            if source_start == '':
+                source_start = None
+        source_end = feed_info_row.get('feed_end_date')
+        if source_end is not None:
+            source_end = source_end.strip()
+            if source_end == '':
+                source_end = None
+
         metadata_row: MetadataImportRow = {
             'id': 1,
             'source_folder': str(self._context.gtfs_folder_path.resolve()),
-            'source_feed_start_date': feed_info_row['feed_start_date'],
-            'source_feed_end_date': feed_info_row['feed_end_date'],
+            'source_feed_start_date': source_start,
+            'source_feed_end_date': source_end,
             'import_start': import_start.isoformat(),
             'import_end': None,
         }
