@@ -1,7 +1,7 @@
 <?php
 
 $app_profile = 'default';
-if (isset($_SERVER) && isset($_SERVER['HTTP_HOST']) && ($_SERVER['HTTP_HOST'] === 'localhost')) {
+if (isset($_SERVER) && isset($_SERVER['HTTP_HOST']) && (strpos($_SERVER['HTTP_HOST'], 'localhost') !== false)) {
     $app_profile = 'dev';
 }
 
