@@ -8,6 +8,7 @@ from .helpers.db_engine import SQLiteDBEngine
 from .helpers.log_helpers import log_message
 
 from .import_context import ImportContext
+from .import_metadata import ImportMetadata
 from .date_range import resolve_import_date_range
 from .csv_importer import CSVImporter
 from .calendar_importer import CalendarImporter
@@ -62,8 +63,10 @@ class GTFS_DB_Importer:
         self._routes_importer = RoutesImporter(context)
         self._transfers_importer = TransfersImporter(context)
         self._shapes_importer = ShapesImporter(context)
+        self._import_metadata = ImportMetadata(context)
 
     def start(self):
+        import_start = datetime.datetime.now(datetime.timezone.utc)
         log_message("START GTFS IMPORT")
         log_message(f'GTFS PATH : {self._gtfs_folder_path}')
         log_message(f'DB PATH   : {self._db_engine.db_path}')
@@ -76,6 +79,7 @@ class GTFS_DB_Importer:
         #
         
         self._write_lock_file()
+        self._import_metadata.start_import(import_start)
 
         # calendar
         self._calendar_importer.log_date_range()
@@ -115,6 +119,7 @@ class GTFS_DB_Importer:
         self._shapes_importer.import_shapes()
         
         self._cleanup()
+        self._import_metadata.finish_import()
         
         self._remove_lock_file()
 
