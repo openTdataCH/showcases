@@ -32,6 +32,8 @@ class FeedInfoImporter:
                             f'kept {formatted_row_count}'
                         )
 
+                    feed_info_row['feed_start_date'] = self._context.calendar_data['start_date'].strftime('%Y%m%d')
+                    feed_info_row['feed_end_date'] = self._context.calendar_data['end_date'].strftime('%Y%m%d')
                     feed_info_writer.prepare_row(feed_info_row)
                     row_count += 1
                 # loop feed_info.txt CSV rows
