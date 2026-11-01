@@ -9,6 +9,7 @@ from .calendar_dates_filter import CalendarDatesFilter
 from .calendar_exporter import CalendarExporter
 from .filter_context import FilterContext
 from .trips_filter import TripsFilter
+from .routes_filter import RoutesFilter
 from .helpers.config_helpers import load_yaml_config
 from .helpers.db_engine import SQLiteDBEngine
 from .helpers.log_helpers import log_message
@@ -90,6 +91,17 @@ class GTFS_Filter:
         trips_filter = TripsFilter()
         trips_filter.filter(
             self._source_gtfs_path, self._destination_gtfs_path, db_engine, self._context,
+        )
+        print()
+
+        log_message('Step 9: Load active route IDs from trips into context')
+        self._context.load_active_route_ids(db_engine)
+        print()
+
+        log_message('Step 10: Filter routes by active route IDs')
+        routes_filter = RoutesFilter()
+        routes_filter.filter(
+            self._source_gtfs_path, self._destination_gtfs_path, self._context,
         )
         print()
         log_message('DONE GTFS folder filter')
