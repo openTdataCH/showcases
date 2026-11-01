@@ -1,4 +1,5 @@
 import csv
+import shutil
 from datetime import date, datetime
 from pathlib import Path
 from typing import Dict, Optional
@@ -152,7 +153,22 @@ class GTFS_Filter:
             self._source_gtfs_path, self._destination_gtfs_path, self._context,
         )
         print()
+
+        log_message('Step 18: Remove intermediate database folder')
+        self._cleanup(db_engine)
+        print()
         log_message('DONE GTFS folder filter')
+
+    def _cleanup(self, db_engine: SQLiteDBEngine) -> None:
+        cursor = db_engine.get_cursor()
+        connection = cursor.connection
+        cursor.close()
+        connection.close()
+
+        temp_db_path = self._destination_gtfs_path / 'temp_db'
+        log_message(f'Removing {temp_db_path.resolve()}')
+        shutil.rmtree(temp_db_path)
+        log_message('Removed intermediate database folder')
 
     def _read_feed_info(self) -> Dict[str, str]:
         source_path = self._source_gtfs_path / 'feed_info.txt'
