@@ -16,3 +16,6 @@ tables:
       - service_id
       - date
       - exception_type
+  trips:
+    columns:
+      - trip_id TEXT PRIMARY KEY
