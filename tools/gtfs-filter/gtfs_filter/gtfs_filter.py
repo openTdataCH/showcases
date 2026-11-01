@@ -12,6 +12,7 @@ from .trips_filter import TripsFilter
 from .routes_filter import RoutesFilter
 from .agency_filter import AgencyFilter
 from .frequencies_filter import FrequenciesFilter
+from .stop_times_filter import StopTimesFilter
 from .helpers.config_helpers import load_yaml_config
 from .helpers.db_engine import SQLiteDBEngine
 from .helpers.log_helpers import log_message
@@ -122,6 +123,13 @@ class GTFS_Filter:
         frequencies_filter = FrequenciesFilter()
         frequencies_filter.filter(
             self._source_gtfs_path, self._destination_gtfs_path, self._context,
+        )
+        print()
+
+        log_message('Step 14: Filter stop times by active trip IDs and store active stop IDs')
+        stop_times_filter = StopTimesFilter()
+        stop_times_filter.filter(
+            self._source_gtfs_path, self._destination_gtfs_path, db_engine, self._context,
         )
         print()
         log_message('DONE GTFS folder filter')
