@@ -9,6 +9,10 @@ class ServiceIdRow(TypedDict):
     service_id: str
 
 
+class RouteIdRow(TypedDict):
+    route_id: str
+
+
 class FilterContext:
     def __init__(self):
         self.active_service_ids: Set[str] = set()
