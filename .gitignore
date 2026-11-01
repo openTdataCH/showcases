@@ -2,6 +2,7 @@
 
 .env.local
 
-apps/gtfs-rt-status/js/dist
-apps/hrdf-check-duplicates/js/dist
-apps/ojp-demo/js/dist
+apps/**/js/dist
+
+__pycache__
+.venv
