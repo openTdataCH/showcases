@@ -8,8 +8,9 @@ from .helpers.db_engine import SQLiteDBEngine
 from .helpers.log_helpers import log_message
 
 
-class TripIdRow(TypedDict):
+class TripRow(TypedDict):
     trip_id: str
+    route_id: str
 
 
 class TripsFilter:
@@ -39,8 +40,11 @@ class TripsFilter:
                             continue
 
                         writer.prepare_row(row)
-                        trip_id_row: TripIdRow = {'trip_id': row['trip_id']}
-                        trip_ids_writer.prepare_row(trip_id_row)
+                        trip_row: TripRow = {
+                            'trip_id': row['trip_id'],
+                            'route_id': row['route_id'],
+                        }
+                        trip_ids_writer.prepare_row(trip_row)
                         kept_rows += 1
                 finally:
                     writer.close()
@@ -52,4 +56,5 @@ class TripsFilter:
         log_message(f'Loading retained trip IDs from {trip_ids_writer.csv_path}')
         db_engine.drop_and_recreate_table('trips')
         db_engine.load_csv_into_table('trips', trip_ids_writer.csv_path)
-        log_message(f'Stored {kept_rows} trip IDs in the intermediate trips table')
+        db_engine.add_table_indexes('trips')
+        log_message(f'Stored {kept_rows} trips with trip_id and route_id in the intermediate trips table')

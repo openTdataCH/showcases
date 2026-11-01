@@ -19,3 +19,6 @@ tables:
   trips:
     columns:
       - trip_id TEXT PRIMARY KEY
+      - route_id TEXT NOT NULL
+    indexes:
+      - route_id
