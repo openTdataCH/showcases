@@ -55,7 +55,7 @@ class GTFS_Filter:
         )
         print()
 
-        log_message('Step 3: Apply calendar_dates to calendar day_bits')
+        log_message('Step 3: Populate calendar_dates database with exceptions within the filter range')
         calendar_dates_filter = CalendarDatesFilter()
         calendar_dates_filter.filter(
             self._source_gtfs_path, db_engine, self._date_from, self._date_to,

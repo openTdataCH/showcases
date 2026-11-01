@@ -6,3 +6,13 @@ tables:
       - start_date TEXT NOT NULL
       - end_date TEXT NOT NULL
       - day_bits TEXT # similar with HRDF
+
+  calendar_dates:
+    columns:
+      - service_id TEXT NOT NULL
+      - date TEXT NOT NULL
+      - exception_type INTEGER NOT NULL
+    indexes:
+      - service_id
+      - date
+      - exception_type
