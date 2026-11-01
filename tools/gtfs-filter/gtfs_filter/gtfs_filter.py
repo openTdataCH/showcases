@@ -47,11 +47,12 @@ class GTFS_Filter:
         )
         print()
 
-        log_message('Step 2: Populate calendar database with day_bits')
         filter_path = Path(__file__).resolve().parent
         config = load_yaml_config(filter_path / 'config.yml')
         schema_path = filter_path / config['temp_db_schema_path']
         db_engine = SQLiteDBEngine.init_read_write(db_path, schema_path)
+
+        log_message('Step 2: Populate calendar database with day_bits')
         calendar_filter = CalendarFilter()
         calendar_filter.filter(
             self._source_gtfs_path, db_engine, date_from, date_to,
