@@ -8,6 +8,7 @@ from .calendar_filter import CalendarFilter
 from .calendar_dates_filter import CalendarDatesFilter
 from .calendar_exporter import CalendarExporter
 from .filter_context import FilterContext
+from .trips_filter import TripsFilter
 from .helpers.config_helpers import load_yaml_config
 from .helpers.db_engine import SQLiteDBEngine
 from .helpers.log_helpers import log_message
@@ -82,6 +83,13 @@ class GTFS_Filter:
         calendar_exporter = CalendarExporter()
         calendar_exporter.export(
             self._source_gtfs_path, self._destination_gtfs_path, self._context,
+        )
+        print()
+
+        log_message('Step 8: Filter trips by active service IDs and store retained trip IDs')
+        trips_filter = TripsFilter()
+        trips_filter.filter(
+            self._source_gtfs_path, self._destination_gtfs_path, db_engine, self._context,
         )
         print()
         log_message('DONE GTFS folder filter')
