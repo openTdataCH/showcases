@@ -13,6 +13,7 @@ from .routes_filter import RoutesFilter
 from .agency_filter import AgencyFilter
 from .frequencies_filter import FrequenciesFilter
 from .stop_times_filter import StopTimesFilter
+from .stops_filter import StopsFilter
 from .helpers.config_helpers import load_yaml_config
 from .helpers.db_engine import SQLiteDBEngine
 from .helpers.log_helpers import log_message
@@ -130,6 +131,17 @@ class GTFS_Filter:
         stop_times_filter = StopTimesFilter()
         stop_times_filter.filter(
             self._source_gtfs_path, self._destination_gtfs_path, db_engine, self._context,
+        )
+        print()
+
+        log_message('Step 15: Load active stop IDs into context')
+        self._context.load_active_stop_ids(db_engine)
+        print()
+
+        log_message('Step 16: Filter stops by active stop IDs')
+        stops_filter = StopsFilter()
+        stops_filter.filter(
+            self._source_gtfs_path, self._destination_gtfs_path, self._context,
         )
         print()
         log_message('DONE GTFS folder filter')
