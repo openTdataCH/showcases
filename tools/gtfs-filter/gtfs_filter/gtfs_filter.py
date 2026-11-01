@@ -30,9 +30,9 @@ class GTFS_Filter:
         log_message(f'Destination GTFS folder: {self._destination_gtfs_path.resolve()}')
 
         feed_info = self._read_feed_info()
-        self._resolve_date_range(feed_info)
-        log_message(f'From: {self._date_from.isoformat()}')
-        log_message(f'To: {self._date_to.isoformat()}')
+        date_from, date_to = self._resolve_date_range(feed_info)
+        log_message(f'From: {date_from.isoformat()}')
+        log_message(f'To: {date_to.isoformat()}')
         log_message(f"feed_start_date: {feed_info.get('feed_start_date', '')}")
         log_message(f"feed_end_date: {feed_info.get('feed_end_date', '')}")
         db_path = self._destination_gtfs_path / 'temp_db' / 'filter.db'
@@ -43,7 +43,7 @@ class GTFS_Filter:
         feed_info_filter = FeedInfoFilter()
         feed_info_filter.filter(
             self._source_gtfs_path, self._destination_gtfs_path,
-            self._date_from, self._date_to,
+            date_from, date_to,
         )
         print()
 
@@ -54,14 +54,14 @@ class GTFS_Filter:
         db_engine = SQLiteDBEngine.init_read_write(db_path, schema_path)
         calendar_filter = CalendarFilter()
         calendar_filter.filter(
-            self._source_gtfs_path, db_engine, self._date_from, self._date_to,
+            self._source_gtfs_path, db_engine, date_from, date_to,
         )
         print()
 
         log_message('Step 3: Populate calendar_dates database with exceptions within the filter range')
         calendar_dates_filter = CalendarDatesFilter()
         calendar_dates_filter.filter(
-            self._source_gtfs_path, db_engine, self._date_from, self._date_to,
+            self._source_gtfs_path, db_engine, date_from, date_to,
         )
         print()
 
@@ -95,19 +95,23 @@ class GTFS_Filter:
             feed_info = next(reader, {})
         return feed_info
 
-    def _resolve_date_range(self, feed_info: Dict[str, str]) -> None:
-        if self._date_from is None or self._date_to is None:
-            if self._date_from is None:
-                start_date = feed_info.get('feed_start_date')
-                if not start_date:
-                    raise ValueError('Provide --from: source feed_start_date is missing')
-                self._date_from = datetime.strptime(start_date, '%Y%m%d').date()
+    def _resolve_date_range(self, feed_info: Dict[str, str]) -> tuple[date, date]:
+        date_from = self._date_from
+        date_to = self._date_to
+        if date_from is None:
+            start_date = feed_info.get('feed_start_date')
+            if not start_date:
+                raise ValueError('Provide --from: source feed_start_date is missing')
+            date_from = datetime.strptime(start_date, '%Y%m%d').date()
 
-            if self._date_to is None:
-                end_date = feed_info.get('feed_end_date')
-                if not end_date:
-                    raise ValueError('Provide --to: source feed_end_date is missing')
-                self._date_to = datetime.strptime(end_date, '%Y%m%d').date()
+        if date_to is None:
+            end_date = feed_info.get('feed_end_date')
+            if not end_date:
+                raise ValueError('Provide --to: source feed_end_date is missing')
+            date_to = datetime.strptime(end_date, '%Y%m%d').date()
 
-        if self._date_from > self._date_to:
+        if date_from > date_to:
             raise ValueError('Resolved start date must be on or before the end date')
+
+        resolved_date_range = (date_from, date_to)
+        return resolved_date_range
