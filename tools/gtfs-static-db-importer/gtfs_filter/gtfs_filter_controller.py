@@ -6,8 +6,8 @@ from typing import Any, List
 from datetime import datetime
 import re
 
-from gtfs_filter.helpers.db_engine import SQLiteDBEngine
-from gtfs_filter.helpers.log_helpers import log_message
+from .helpers.db_engine import SQLiteDBEngine
+from .helpers.log_helpers import log_message
 
 class GTFS_FilterController:
     _app_config: Any

@@ -1,1 +1,1 @@
-../../inc/shared/inc/helpers/csv_updater.py
+../../../_shared/inc/helpers/csv_updater.py

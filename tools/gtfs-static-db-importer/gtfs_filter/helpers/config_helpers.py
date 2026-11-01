@@ -1,1 +1,1 @@
-../../inc/shared/inc/helpers/config_helpers.py
+../../../_shared/inc/helpers/config_helpers.py
