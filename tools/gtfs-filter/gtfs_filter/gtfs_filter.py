@@ -4,6 +4,9 @@ from pathlib import Path
 from typing import Dict, Optional
 
 from .feed_info_filter import FeedInfoFilter
+from .calendar_filter import CalendarFilter
+from .helpers.config_helpers import load_yaml_config
+from .helpers.db_engine import SQLiteDBEngine
 from .helpers.log_helpers import log_message
 
 
@@ -28,6 +31,8 @@ class GTFS_Filter:
         log_message(f'To: {self._date_to.isoformat()}')
         log_message(f"feed_start_date: {feed_info.get('feed_start_date', '')}")
         log_message(f"feed_end_date: {feed_info.get('feed_end_date', '')}")
+        db_path = self._destination_gtfs_path / 'temp_db' / 'filter.db'
+        log_message(f'Intermediate database: {db_path.resolve()}')
         print()
 
         log_message('Step 1: Filter feed_info.txt')
@@ -35,6 +40,17 @@ class GTFS_Filter:
         feed_info_filter.filter(
             self._source_gtfs_path, self._destination_gtfs_path,
             self._date_from, self._date_to,
+        )
+        print()
+
+        log_message('Step 2: Populate calendar database with day_bits')
+        filter_path = Path(__file__).resolve().parent
+        config = load_yaml_config(filter_path / 'config.yml')
+        schema_path = filter_path / config['temp_db_schema_path']
+        db_engine = SQLiteDBEngine.init_read_write(db_path, schema_path)
+        calendar_filter = CalendarFilter()
+        calendar_filter.filter(
+            self._source_gtfs_path, db_engine, self._date_from, self._date_to,
         )
         print()
         log_message('DONE GTFS folder filter')
