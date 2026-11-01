@@ -1,0 +1,2 @@
+# paths relative to this file parent
+temp_db_schema_path: "config/temp_db_schema.yml"
