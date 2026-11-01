@@ -25,7 +25,6 @@ def _parse_date(value: str) -> date:
 def _main():
     parser = argparse.ArgumentParser(
         description='Filter a GTFS folder by date range',
-        epilog='Currently filters feed_info.txt only.'
     )
     parser.add_argument(
         '--gtfs-src', '--gtfs_src', type=Path, required=True,
