@@ -61,6 +61,10 @@ class GTFS_Filter:
             self._source_gtfs_path, db_engine, self._date_from, self._date_to,
         )
         print()
+
+        log_message('Step 4: Apply grouped calendar_dates and reload calendar from CSV')
+        calendar_dates_filter.apply_to_calendar(db_engine)
+        print()
         log_message('DONE GTFS folder filter')
 
     def _read_feed_info(self) -> Dict[str, str]:
