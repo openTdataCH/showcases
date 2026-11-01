@@ -6,6 +6,8 @@ from typing import Dict, Optional
 from .feed_info_filter import FeedInfoFilter
 from .calendar_filter import CalendarFilter
 from .calendar_dates_filter import CalendarDatesFilter
+from .calendar_exporter import CalendarExporter
+from .filter_context import FilterContext
 from .helpers.config_helpers import load_yaml_config
 from .helpers.db_engine import SQLiteDBEngine
 from .helpers.log_helpers import log_message
@@ -20,6 +22,7 @@ class GTFS_Filter:
         self._destination_gtfs_path = destination_gtfs_path
         self._date_from = date_from
         self._date_to = date_to
+        self._context = FilterContext()
 
     def filter(self) -> None:
         log_message('START GTFS folder filter')
@@ -68,6 +71,17 @@ class GTFS_Filter:
 
         log_message('Step 5: Discard calendar rows with no active days')
         calendar_filter.discard_inactive(db_engine)
+        print()
+
+        log_message('Step 6: Load active service IDs into context')
+        self._context.load_active_service_ids(db_engine)
+        print()
+
+        log_message('Step 7: Export calendar and calendar_dates for active service IDs')
+        calendar_exporter = CalendarExporter()
+        calendar_exporter.export(
+            self._source_gtfs_path, self._destination_gtfs_path, self._context,
+        )
         print()
         log_message('DONE GTFS folder filter')
 
