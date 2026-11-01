@@ -33,7 +33,7 @@ class CalendarExporter:
             try:
                 for row in reader:
                     parsed_rows += 1
-                    if parsed_rows % 1_000_000 == 0:
+                    if parsed_rows % 5_000_000 == 0:
                         log_message(f'Parsed {parsed_rows} {source_path.name} rows; kept {kept_rows}')
                     if row['service_id'] not in context.active_service_ids:
                         continue
