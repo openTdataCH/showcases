@@ -13,11 +13,16 @@ class RouteIdRow(TypedDict):
     route_id: str
 
 
+class TripIdRow(TypedDict):
+    trip_id: str
+
+
 class FilterContext:
     def __init__(self):
         self.active_service_ids: Set[str] = set()
         self.active_route_ids: Set[str] = set()
         self.active_agency_ids: Set[str] = set()
+        self.active_trip_ids: Set[str] = set()
 
     def load_active_service_ids(self, db_engine: SQLiteDBEngine) -> None:
         self.active_service_ids.clear()
@@ -36,3 +41,12 @@ class FilterContext:
                 route_row = cast(RouteIdRow, db_row)
                 self.active_route_ids.add(route_row['route_id'])
         log_message(f'Loaded {len(self.active_route_ids)} active route IDs into context')
+
+    def load_active_trip_ids(self, db_engine: SQLiteDBEngine) -> None:
+        self.active_trip_ids.clear()
+        with closing(db_engine.get_cursor()) as cursor:
+            cursor.execute('SELECT trip_id FROM trips')
+            for db_row in cursor:
+                trip_row = cast(TripIdRow, db_row)
+                self.active_trip_ids.add(trip_row['trip_id'])
+        log_message(f'Loaded {len(self.active_trip_ids)} active trip IDs into context')

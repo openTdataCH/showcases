@@ -11,6 +11,7 @@ from .filter_context import FilterContext
 from .trips_filter import TripsFilter
 from .routes_filter import RoutesFilter
 from .agency_filter import AgencyFilter
+from .frequencies_filter import FrequenciesFilter
 from .helpers.config_helpers import load_yaml_config
 from .helpers.db_engine import SQLiteDBEngine
 from .helpers.log_helpers import log_message
@@ -109,6 +110,17 @@ class GTFS_Filter:
         log_message('Step 11: Filter agencies referenced by retained routes')
         agency_filter = AgencyFilter()
         agency_filter.filter(
+            self._source_gtfs_path, self._destination_gtfs_path, self._context,
+        )
+        print()
+
+        log_message('Step 12: Load active trip IDs into context')
+        self._context.load_active_trip_ids(db_engine)
+        print()
+
+        log_message('Step 13: Filter frequencies by active trip IDs, if present')
+        frequencies_filter = FrequenciesFilter()
+        frequencies_filter.filter(
             self._source_gtfs_path, self._destination_gtfs_path, self._context,
         )
         print()
