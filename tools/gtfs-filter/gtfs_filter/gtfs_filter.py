@@ -65,6 +65,10 @@ class GTFS_Filter:
         log_message('Step 4: Apply grouped calendar_dates and reload calendar from CSV')
         calendar_dates_filter.apply_to_calendar(db_engine)
         print()
+
+        log_message('Step 5: Discard calendar rows with no active days')
+        calendar_filter.discard_inactive(db_engine)
+        print()
         log_message('DONE GTFS folder filter')
 
     def _read_feed_info(self) -> Dict[str, str]:

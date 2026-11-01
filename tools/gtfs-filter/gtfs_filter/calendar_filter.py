@@ -1,4 +1,5 @@
 import csv
+from contextlib import closing
 from datetime import date, datetime, timedelta
 from pathlib import Path
 from typing import Dict, TypedDict
@@ -45,6 +46,13 @@ class CalendarFilter:
         db_engine.drop_and_recreate_table('calendar')
         db_engine.load_csv_into_table('calendar', writer.csv_path)
         log_message(f'Stored {parsed_rows} calendar rows; keeping all rows until calendar_dates is loaded')
+
+    def discard_inactive(self, db_engine: SQLiteDBEngine) -> None:
+        with closing(db_engine.get_cursor()) as cursor:
+            with cursor.connection:
+                cursor.execute("DELETE FROM calendar WHERE INSTR(day_bits, '1') = 0")
+                dropped_rows = cursor.rowcount
+        log_message(f'Discarded {dropped_rows} calendar rows with no active days after applying calendar_dates')
 
     def _build_day_bits(self, row: Dict[str, str], date_from: date, date_to: date) -> str:
         days_no = (date_to - date_from).days + 1
