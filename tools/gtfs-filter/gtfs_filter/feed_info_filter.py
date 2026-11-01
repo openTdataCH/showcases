@@ -32,7 +32,8 @@ class FeedInfoFilter:
         destination_gtfs_path.mkdir(exist_ok=True)
         destination_path = destination_gtfs_path / 'feed_info.txt'
         log_message(f'Writing {destination_path}')
-        csv_updater = CSV_Updater(destination_path, fieldnames)
+        column_names = list(fieldnames)
+        csv_updater = CSV_Updater(destination_path, column_names)
         try:
             for row in rows:
                 csv_updater.prepare_row(row)

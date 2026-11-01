@@ -29,7 +29,8 @@ class CalendarExporter:
             reader = csv.DictReader(source_file)
             if reader.fieldnames is None:
                 raise ValueError(f'Missing CSV header in {source_path}')
-            writer = CSV_Updater(destination_path, reader.fieldnames)
+            column_names = list(reader.fieldnames)
+            writer = CSV_Updater(destination_path, column_names)
             try:
                 for row in reader:
                     parsed_rows += 1
