@@ -14,6 +14,7 @@ from .agency_filter import AgencyFilter
 from .frequencies_filter import FrequenciesFilter
 from .stop_times_filter import StopTimesFilter
 from .stops_filter import StopsFilter
+from .transfers_filter import TransfersFilter
 from .helpers.config_helpers import load_yaml_config
 from .helpers.db_engine import SQLiteDBEngine
 from .helpers.log_helpers import log_message
@@ -141,6 +142,13 @@ class GTFS_Filter:
         log_message('Step 16: Filter stops by active stop IDs')
         stops_filter = StopsFilter()
         stops_filter.filter(
+            self._source_gtfs_path, self._destination_gtfs_path, self._context,
+        )
+        print()
+
+        log_message('Step 17: Filter transfers by active service, stop, route and trip IDs')
+        transfers_filter = TransfersFilter()
+        transfers_filter.filter(
             self._source_gtfs_path, self._destination_gtfs_path, self._context,
         )
         print()
