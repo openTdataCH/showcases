@@ -10,6 +10,7 @@ from .calendar_exporter import CalendarExporter
 from .filter_context import FilterContext
 from .trips_filter import TripsFilter
 from .routes_filter import RoutesFilter
+from .agency_filter import AgencyFilter
 from .helpers.config_helpers import load_yaml_config
 from .helpers.db_engine import SQLiteDBEngine
 from .helpers.log_helpers import log_message
@@ -101,6 +102,13 @@ class GTFS_Filter:
         log_message('Step 10: Filter routes by active route IDs')
         routes_filter = RoutesFilter()
         routes_filter.filter(
+            self._source_gtfs_path, self._destination_gtfs_path, self._context,
+        )
+        print()
+
+        log_message('Step 11: Filter agencies referenced by retained routes')
+        agency_filter = AgencyFilter()
+        agency_filter.filter(
             self._source_gtfs_path, self._destination_gtfs_path, self._context,
         )
         print()

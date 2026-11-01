@@ -17,6 +17,7 @@ class FilterContext:
     def __init__(self):
         self.active_service_ids: Set[str] = set()
         self.active_route_ids: Set[str] = set()
+        self.active_agency_ids: Set[str] = set()
 
     def load_active_service_ids(self, db_engine: SQLiteDBEngine) -> None:
         self.active_service_ids.clear()

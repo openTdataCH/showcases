@@ -15,6 +15,7 @@ class RoutesFilter:
         log_message(f'Reading {source_path}; keeping routes for active route IDs')
         parsed_rows = 0
         kept_rows = 0
+        context.active_agency_ids.clear()
         with source_path.open('r', encoding='utf-8-sig', newline='') as source_file:
             reader = csv.DictReader(source_file)
             if reader.fieldnames is None:
@@ -29,8 +30,11 @@ class RoutesFilter:
                     if row['route_id'] not in context.active_route_ids:
                         continue
                     writer.prepare_row(row)
+                    agency_id = row.get('agency_id', '')
+                    context.active_agency_ids.add(agency_id)
                     kept_rows += 1
             finally:
                 writer.close()
         dropped_rows = parsed_rows - kept_rows
         log_message(f'Saved {kept_rows} routes to {destination_path}; discarded {dropped_rows}')
+        log_message(f'Collected {len(context.active_agency_ids)} distinct agency IDs into context')
