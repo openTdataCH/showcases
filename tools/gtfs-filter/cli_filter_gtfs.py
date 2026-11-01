@@ -3,6 +3,8 @@ import os
 from datetime import date
 from pathlib import Path
 
+from gtfs_filter.gtfs_filter import GTFS_Filter
+
 
 def _parse_date(value: str) -> date:
     try:
@@ -23,7 +25,7 @@ def _parse_date(value: str) -> date:
 def _main():
     parser = argparse.ArgumentParser(
         description='Filter a GTFS folder by date range',
-        epilog='CLI arguments only; GTFS database import and filtering are not implemented yet.'
+        epilog='Currently filters feed_info.txt only.'
     )
     parser.add_argument(
         '--gtfs-src', '--gtfs_src', type=Path, required=True,
@@ -59,6 +61,9 @@ def _main():
     if args.date_from is not None and args.date_to is not None:
         if args.date_from > args.date_to:
             parser.error('--from must be on or before --to')
+
+    gtfs_filter = GTFS_Filter(args.gtfs_src, args.gtfs_dst, args.date_from, args.date_to)
+    gtfs_filter.filter()
 
 
 if __name__ == '__main__':
