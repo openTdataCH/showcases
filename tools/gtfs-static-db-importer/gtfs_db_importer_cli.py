@@ -36,10 +36,11 @@ def main():
     input_path = args.gtfs_folder_path
 
     if input_path is None:
-        print("ERROR, use with --gtfs-folder-path")
-        sys.exit(1)
+        raise ValueError("ERROR, use with --gtfs-folder-path")
 
-    gtfs_folder_path = Path(os.path.abspath(input_path))
+    gtfs_folder_path = Path(input_path)
+    if not os.path.isdir(gtfs_folder_path):
+        raise FileNotFoundError(f'--gtfs-folder-path {gtfs_folder_path} is not a valid folder')
 
     db_path = None
     if args.output_db_path:

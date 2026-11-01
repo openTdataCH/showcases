@@ -1,0 +1,29 @@
+# schema describing temp db used at filter time
+tables:
+  calendar:
+    columns:
+      - service_id TEXT PRIMARY KEY
+      - start_date TEXT NOT NULL
+      - end_date TEXT NOT NULL
+      - day_bits TEXT # similar with HRDF
+
+  calendar_dates:
+    columns:
+      - service_id TEXT NOT NULL
+      - date TEXT NOT NULL
+      - exception_type INTEGER NOT NULL
+    indexes:
+      - service_id
+      - date
+      - exception_type
+  
+  stops:
+    columns:
+      - stop_id TEXT PRIMARY KEY
+  
+  trips:
+    columns:
+      - trip_id TEXT PRIMARY KEY
+      - route_id TEXT NOT NULL
+    indexes:
+      - route_id

@@ -1,1 +1,1 @@
-../../inc/shared/inc/helpers/log_helpers.py
+../../../_shared/inc/helpers/log_helpers.py
