@@ -5,6 +5,7 @@ from typing import Dict, Optional
 
 from .feed_info_filter import FeedInfoFilter
 from .calendar_filter import CalendarFilter
+from .calendar_dates_filter import CalendarDatesFilter
 from .helpers.config_helpers import load_yaml_config
 from .helpers.db_engine import SQLiteDBEngine
 from .helpers.log_helpers import log_message
@@ -50,6 +51,13 @@ class GTFS_Filter:
         db_engine = SQLiteDBEngine.init_read_write(db_path, schema_path)
         calendar_filter = CalendarFilter()
         calendar_filter.filter(
+            self._source_gtfs_path, db_engine, self._date_from, self._date_to,
+        )
+        print()
+
+        log_message('Step 3: Apply calendar_dates to calendar day_bits')
+        calendar_dates_filter = CalendarDatesFilter()
+        calendar_dates_filter.filter(
             self._source_gtfs_path, db_engine, self._date_from, self._date_to,
         )
         print()
