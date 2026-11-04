@@ -12,6 +12,11 @@ interface ReportValueLookup {
   caption: string
 };
 
+interface AgencyOption {
+  id: string,
+  caption: string,
+}
+
 type CellClassDB = 'odd' | 'even';
 
 interface DayCell {
@@ -42,6 +47,8 @@ interface PageModel {
   mapMonthlyReports: Record<string, GTFS_RT_Static_Monthly_Report_JSON>
   monthItems: string[],
   selectedMonth: string,
+  agencyOptions: AgencyOption[],
+  selectedAgencyId: string,
   hourlyReportCells: ReportCell[][],
   
   selectedReportCell: ReportCell | null,
@@ -116,6 +123,8 @@ export class HomeComponent {
       mapMonthlyReports: {},
       monthItems: monthItems,
       selectedMonth: monthItems[0],
+      agencyOptions: [],
+      selectedAgencyId: '',
       hourlyReportCells: [],
       selectedReportCell: null,
       dayCells: [],
@@ -184,7 +193,45 @@ export class HomeComponent {
     const currentMonthReport = await this.dataService.getMonthlyReport(this.model.selectedMonth);
     this.model.mapMonthlyReports[this.model.selectedMonth] = currentMonthReport;
 
+    this.updateAgencyOptions();
     this.updateReportModel();
+  }
+
+  private updateAgencyOptions() {
+    const mapAgencyIds: Record<string, boolean> = {};
+    for (const monthlyReport of Object.values(this.model.mapMonthlyReports)) {
+      const reportDays = monthlyReport.gtfs_rt_active_by_agency ?? {};
+      for (const dayReports of Object.values(reportDays)) {
+        for (const hourAgencies of Object.values(dayReports)) {
+          for (const agencyId of Object.keys(hourAgencies)) {
+            mapAgencyIds[agencyId] = true;
+          }
+        }
+      }
+    }
+
+    const agencyIds = Object.keys(mapAgencyIds);
+
+    const agencyOptions: AgencyOption[] = [];
+    const mapOrganisations = this.dataService.businessOrganisationsController.mapOrganisationNumber;
+    for (const agencyId of agencyIds) {
+      let caption = agencyId;
+      const organisation = mapOrganisations[agencyId];
+      if (organisation !== undefined) {
+        caption = organisation.abbreviationDe + ' (' + organisation.organisationNumber + ')' + ' · ' + organisation.descriptionDe;
+      }
+      agencyOptions.push({ id: agencyId, caption: caption });
+    }
+
+    agencyOptions.sort((a, b) => {
+      const comparison = a.caption.localeCompare(b.caption, 'de-CH', { sensitivity: 'base' });
+      return comparison;
+    });
+
+    this.model.agencyOptions = agencyOptions;
+    if (!(this.model.selectedAgencyId in mapAgencyIds)) {
+      this.model.selectedAgencyId = '';
+    }
   }
 
   public async onMonthSelectChange() {
