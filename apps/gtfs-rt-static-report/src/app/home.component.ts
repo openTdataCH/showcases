@@ -1,4 +1,5 @@
 import { Component, ElementRef, ViewChild } from '@angular/core';
+import { ActivatedRoute, Router } from '@angular/router';
 
 import { DataService } from './data.service';
 import { DateHelpers } from './helpers/date-helpers';
@@ -118,7 +119,7 @@ export class HomeComponent {
 
   @ViewChild('scrollContainer') scrollContainer!: ElementRef;
 
-  constructor(private dataService: DataService) {
+  constructor(private dataService: DataService, private route: ActivatedRoute, private router: Router) {
     this.model = {
       mapMonthlyReports: {},
       monthItems: monthItems,
@@ -141,11 +142,33 @@ export class HomeComponent {
 
   async ngOnInit(): Promise<void> {
     await this.fetchAndUpdateReport();
+    this.applyAgencyQueryParameter();
     
     // HACK setTimeout with 0, otherwise doesnt scroll, the scroll scrollContainer is not ready
     setTimeout(() => {
       this.updateSelectionByDayHr();
     }, 0);
+  }
+
+  private applyAgencyQueryParameter() {
+    const agencyParameter = this.route.snapshot.queryParamMap.get('agency');
+    if (agencyParameter === null) {
+      return;
+    }
+
+    let agencyId = agencyParameter.trim();
+    const organisation = this.dataService.businessOrganisationsController.mapSboid[agencyId];
+    if (organisation !== undefined) {
+      agencyId = organisation.organisationNumber;
+    }
+
+    const agencyOption = this.model.agencyOptions.find(option => option.id === agencyId);
+    if (agencyOption === undefined) {
+      return;
+    }
+
+    this.model.selectedAgencyId = agencyId;
+    this.updateReportModel();
   }
 
   private updateHourCells() {
@@ -247,8 +270,21 @@ export class HomeComponent {
     this.updateReportModel();
   }
 
-  public onAgencySelectChange() {
+  public async onAgencySelectChange(): Promise<void> {
     this.updateReportModel();
+
+    let agencyParameter: string | null = null;
+    if (this.model.selectedAgencyId !== '') {
+      agencyParameter = this.model.selectedAgencyId;
+    }
+
+    await this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: { agency: agencyParameter },
+      queryParamsHandling: 'merge',
+      preserveFragment: true,
+      replaceUrl: true,
+    });
   }
 
   private updateReportModel() {
