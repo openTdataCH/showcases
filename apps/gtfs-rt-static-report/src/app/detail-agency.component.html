@@ -63,7 +63,9 @@
             <ng-container *ngFor="let reportRow of this.model.reportRows">
               <tr>
                 <td>{{ reportRow.agency.agency_id }}</td>
-                <td class="left-thick">{{ reportRow.agency.agency_name }}</td>
+                <td class="left-thick">
+                  <a [href]="computeAgencySnapshotURL(reportRow.agency.agency_id)" target="_blank" rel="noopener noreferrer">{{ reportRow.agency.agency_name }}</a>
+                </td>
                 
                 <td class="left-thick">
                   <div class="mb-1 d-flex gap-2 align-items-center">
