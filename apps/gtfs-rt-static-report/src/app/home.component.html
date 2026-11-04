@@ -16,7 +16,8 @@
       
       <label for="agencySelect">Agency</label>
       <div class="mx-2">
-        <select class="form-select form-control form-control-sm" id="agencySelect" [(ngModel)]="this.model.selectedAgencyId">
+        <select class="form-select form-control form-control-sm" id="agencySelect" [(ngModel)]="this.model.selectedAgencyId"
+          [disabled]="this.model.selectedReportValueLookup.type !== 'total_active_rows_no' && this.model.selectedReportValueLookup.type !== 'total_rows_no'">
           <option value="">All agencies</option>
           <option *ngFor="let agencyOption of this.model.agencyOptions" [ngValue]="agencyOption.id">{{ agencyOption.caption }}</option>
         </select>
