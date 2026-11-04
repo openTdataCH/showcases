@@ -247,6 +247,10 @@ export class HomeComponent {
     this.updateReportModel();
   }
 
+  public onAgencySelectChange() {
+    this.updateReportModel();
+  }
+
   private updateReportModel() {
     const latestReport = this.model.mapMonthlyReports[this.model.selectedMonth] ?? null;
 
@@ -348,9 +352,22 @@ export class HomeComponent {
               }
             } else {
               const reportAny = reportHR as any;
-              const reportValue = reportAny[this.model.selectedReportValueLookup.type] ?? null;
+              const valueType = this.model.selectedReportValueLookup.type;
+              let reportValue = reportAny[valueType] ?? null;
+              if (this.model.selectedAgencyId !== '') {
+                if (valueType === 'total_active_rows_no') {
+                  reportValue = report.gtfs_rt_active_by_agency?.[dayF]?.[hrMinF]?.[this.model.selectedAgencyId] ?? null;
+                } else if (valueType === 'total_rows_no') {
+                  reportValue = report.gtfs_rt_by_agency?.[dayF]?.[hrMinF]?.[this.model.selectedAgencyId] ?? null;
+                }
+              }
               if (reportValue === null) {
-                reportCell.cellValue = 'n/a'
+                reportCell.cellValue = 'n/a';
+                if (this.model.selectedAgencyId !== '') {
+                  if (valueType === 'total_active_rows_no' || valueType === 'total_rows_no') {
+                    reportCell.cellValue = '';
+                  }
+                }
               } else {
                 reportCell.cellValue = reportValue.toLocaleString('de-CH');
               }
