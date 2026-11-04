@@ -5,13 +5,24 @@ import { firstValueFrom } from 'rxjs';
 import { GTFS_RT_Static_Monthly_Report_JSON, GTFS_RT_Static_Report } from './types/_all';
 import { Response_GTFS_RT } from './models/gtfs-rt/gtfs-rt-response';
 import { GTFS_DB_LookupAgency, GTFS_DB_LookupRoutes } from './models/gtfs/gtfs';
+import { BusinessOrganisationsController } from './controllers/business-organisations';
 
 @Injectable({
   providedIn: 'root'
 })
 export class DataService {
+  public businessOrganisationsController: BusinessOrganisationsController;
 
-  constructor(private http: HttpClient) { }
+  constructor(private http: HttpClient) {
+    this.businessOrganisationsController = new BusinessOrganisationsController();
+  }
+
+  public async fetchBusinessOrganisationsCSV(): Promise<string> {
+    const url = 'https://opentdatach.github.io/data/business-organisation-v2/full-business-organisation_LATEST.csv';
+    const params = { rand: Date.now().toString() };
+    const csv = await firstValueFrom(this.http.get(url, { params: params, responseType: 'text' }));
+    return csv;
+  }
 
   async getMonthlyReport(dateYM: string): Promise<GTFS_RT_Static_Monthly_Report_JSON> {
     const dateYMParts = dateYM.split('-');
