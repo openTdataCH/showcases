@@ -90,6 +90,7 @@
       
       <!-- Right-side column (details) -->
       <detail-report class="details p-2 d-flex flex-column"
+        [agencyId]="this.model.selectedAgencyId"
         [reportMetadata]="this.model.selectedReportCell?.report ?? null"
         [compareData]="this.model.selectedReportCell?.compareMetadata ?? null">
       </detail-report>

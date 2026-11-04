@@ -55,6 +55,13 @@ interface PageModel {
   styleUrls: ['./detail-report.component.scss']
 })
 export class DetailReportComponent implements OnInit {
+  private _agencyId = '';
+  @Input()
+  set agencyId(value: string) {
+    this._agencyId = value;
+    this.model.detailReportURL = this.computeGTFS_RT_StatusReportURL();
+  }
+
   private _reportMetadata: GTFS_RT_Static_Report_Metadata_JSON | null;
   @Input()
   set reportMetadata(value: GTFS_RT_Static_Report_Metadata_JSON | null) {
@@ -219,7 +226,11 @@ export class DetailReportComponent implements OnInit {
       return '';
     }
 
-    const url = 'https://tools.opentransportdata.swiss/gtfs-rt-status/?report=' + metadata.gtfs_rt_filename;
+    const templateURL = 'https://gtfs-rt.ch/?gtfs-rt-snapshot=[YYYY]-[MM]-[DD]-[HHMM]';
+    let url = ReportHelpers.computeSnapshotURLFromTemplate(templateURL, metadata.gtfs_rt_filename);
+    if (this._agencyId !== '') {
+      url += '&agency=' + encodeURIComponent(this._agencyId);
+    }
 
     return url;
   }
