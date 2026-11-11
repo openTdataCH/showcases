@@ -1,6 +1,6 @@
 from contextlib import closing
 from pathlib import Path
-from typing import List, Optional, TypedDict, cast
+from typing import List, Literal, Optional, TypedDict, Union, cast
 
 from gtfs_db_importer.helpers.gtfs_helpers import parse_gtfs_day
 
@@ -20,11 +20,23 @@ class AgencyRow(TypedDict):
     agency_phone: Optional[str]
 
 
-class AgencyLookup(TypedDict):
+class RouteRow(TypedDict):
+    rowid: int
+    route_id: str
+    agency_id: str
+    route_short_name: str
+    route_long_name: Optional[str]
+    route_desc: Optional[str]
+    route_type: int
+    day_bits: Optional[str]
+    representative_trip_id: Optional[str]
+
+
+class TableLookup(TypedDict):
     lookup_name: str
     data_source: str
     rows_no: int
-    rows: List[AgencyRow]
+    rows: List[Union[AgencyRow, RouteRow]]
 
 
 class GTFS_StaticLookupsController:
@@ -37,29 +49,30 @@ class GTFS_StaticLookupsController:
         self._gtfs_day = gtfs_day.strftime('%Y-%m-%d')
 
     def create_table_lookups(self):
-        self._create_agency_lookup()
+        db_engine = SQLiteDBEngine(db_path=self._gtfs_db_path)
+        self._create_table_lookup(db_engine, 'agency')
+        self._create_table_lookup(db_engine, 'routes')
 
-    def _create_agency_lookup(self):
-        log_message('Creating agency lookup')
+    def _create_table_lookup(self, db_engine: SQLiteDBEngine, table_name: Literal['agency', 'routes']):
+        log_message(f'Creating {table_name} lookup')
         path_template = self._app_config['gtfs_static_path_templates']['gtfs_table']
         output_path_s = path_template.replace('${GTFS_DAY}', self._gtfs_day)
-        output_path_s = output_path_s.replace('${TABLE_NAME}', 'agency')
+        output_path_s = output_path_s.replace('${TABLE_NAME}', table_name)
         output_path = Path(output_path_s)
 
-        db_engine = SQLiteDBEngine(db_path=self._gtfs_db_path)
-        rows: List[AgencyRow] = []
+        rows: List[Union[AgencyRow, RouteRow]] = []
         with closing(db_engine.get_cursor()) as cursor:
-            cursor.execute('SELECT ROWID, * FROM agency')
+            cursor.execute(f'SELECT ROWID, * FROM {table_name}')
             for database_row in cursor:
-                agency_row = cast(AgencyRow, dict(database_row))
-                rows.append(agency_row)
+                lookup_row = cast(Union[AgencyRow, RouteRow], dict(database_row))
+                rows.append(lookup_row)
 
-        lookup: AgencyLookup = {
-            'lookup_name': 'agency',
+        lookup: TableLookup = {
+            'lookup_name': table_name,
             'data_source': str(self._gtfs_db_path),
             'rows_no': len(rows),
             'rows': rows,
         }
         export_json_to_file(lookup, output_path, pretty_print=True)
 
-        log_message(f'Created agency lookup with {len(rows)} rows: {output_path}')
+        log_message(f'Created {table_name} lookup with {len(rows)} rows: {output_path}')
