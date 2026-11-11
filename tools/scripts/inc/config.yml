@@ -17,9 +17,9 @@ csv_latest_data:
     info_url: https://data.opentransportdata.swiss/en/dataset/go-realtime
     example: go-realtime.csv
   
-  # https://data.opentransportdata.swiss/en/dataset/slnid-line
-  slnid-line-actual-date:
-    info_url: https://data.opentransportdata.swiss/en/dataset/slnid-line-actual-date
+  # https://data.opentransportdata.swiss/en/dataset/line-v2
+  line-v2:
+    info_url: https://data.opentransportdata.swiss/en/dataset/line-v2
     example: actual-date-line-2025-10-06.csv
     file_prefix: actual-date-line
     symlink_latest_path: "[APP_PATH]/data/opentransportdata.swiss/[PACKAGE_ID]/[PREFIX]_LATEST.csv"
