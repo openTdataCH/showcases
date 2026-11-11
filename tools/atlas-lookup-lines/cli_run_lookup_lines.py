@@ -1,11 +1,6 @@
 import os, sys
 
-import re
-import argparse
-
 from pathlib import Path
-from typing import Dict, List
-from datetime import datetime
 
 from atlas_lookup_lines.atlas_lookup_lines_controller import AtlasLookupLinesController
 
