@@ -32,11 +32,23 @@ class RouteRow(TypedDict):
     representative_trip_id: Optional[str]
 
 
+class StopRow(TypedDict):
+    rowid: int
+    stop_id: str
+    stop_name: str
+    stop_lon: float
+    stop_lat: float
+    location_type: int
+    parent_station: Optional[str]
+    platform_code: Optional[str]
+    original_stop_id: Optional[str]
+
+
 class TableLookup(TypedDict):
     lookup_name: str
     data_source: str
     rows_no: int
-    rows: List[Union[AgencyRow, RouteRow]]
+    rows: List[Union[AgencyRow, RouteRow, StopRow]]
 
 
 class GTFS_StaticLookupsController:
@@ -52,19 +64,20 @@ class GTFS_StaticLookupsController:
         db_engine = SQLiteDBEngine(db_path=self._gtfs_db_path)
         self._create_table_lookup(db_engine, 'agency')
         self._create_table_lookup(db_engine, 'routes')
+        self._create_table_lookup(db_engine, 'stops')
 
-    def _create_table_lookup(self, db_engine: SQLiteDBEngine, table_name: Literal['agency', 'routes']):
+    def _create_table_lookup(self, db_engine: SQLiteDBEngine, table_name: Literal['agency', 'routes', 'stops']):
         log_message(f'Creating {table_name} lookup')
         path_template = self._app_config['gtfs_static_path_templates']['gtfs_table']
         output_path_s = path_template.replace('${GTFS_DAY}', self._gtfs_day)
         output_path_s = output_path_s.replace('${TABLE_NAME}', table_name)
         output_path = Path(output_path_s)
 
-        rows: List[Union[AgencyRow, RouteRow]] = []
+        rows: List[Union[AgencyRow, RouteRow, StopRow]] = []
         with closing(db_engine.get_cursor()) as cursor:
             cursor.execute(f'SELECT ROWID, * FROM {table_name}')
             for database_row in cursor:
-                lookup_row = cast(Union[AgencyRow, RouteRow], dict(database_row))
+                lookup_row = cast(Union[AgencyRow, RouteRow, StopRow], dict(database_row))
                 rows.append(lookup_row)
 
         lookup: TableLookup = {
