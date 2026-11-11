@@ -1,6 +1,8 @@
 import argparse
 from pathlib import Path
 
+from gtfs_static_lookups.gtfs_static_lookups_controller import GTFS_StaticLookupsController
+
 
 def main():
     parser = argparse.ArgumentParser()
@@ -10,6 +12,9 @@ def main():
     gtfs_db_path = args.gtfs_db
     if not gtfs_db_path.exists():
         raise FileNotFoundError(f'GTFS DB path does not exist: {gtfs_db_path}')
+
+    controller = GTFS_StaticLookupsController(gtfs_db_path)
+    controller.create_table_lookups()
 
 
 if __name__ == '__main__':
