@@ -44,11 +44,36 @@ class StopRow(TypedDict):
     original_stop_id: Optional[str]
 
 
+class FTSRouteRow(TypedDict):
+    rowid: int
+    route_id: str
+    trip_stop_ids: str
+
+
+class CalendarRow(TypedDict):
+    rowid: int
+    service_id: str
+    monday: Optional[int]
+    tuesday: Optional[int]
+    wednesday: Optional[int]
+    thursday: Optional[int]
+    friday: Optional[int]
+    saturday: Optional[int]
+    sunday: Optional[int]
+    start_date: str
+    end_date: str
+    day_bits: Optional[str]
+
+
+LookupRow = Union[AgencyRow, RouteRow, StopRow, FTSRouteRow, CalendarRow]
+LookupTableName = Literal['agency', 'routes', 'stops', 'fts_routes', 'calendar']
+
+
 class TableLookup(TypedDict):
     lookup_name: str
     data_source: str
     rows_no: int
-    rows: List[Union[AgencyRow, RouteRow, StopRow]]
+    rows: List[LookupRow]
 
 
 class GTFS_StaticLookupsController:
@@ -65,19 +90,21 @@ class GTFS_StaticLookupsController:
         self._create_table_lookup(db_engine, 'agency')
         self._create_table_lookup(db_engine, 'routes')
         self._create_table_lookup(db_engine, 'stops')
+        self._create_table_lookup(db_engine, 'fts_routes')
+        self._create_table_lookup(db_engine, 'calendar')
 
-    def _create_table_lookup(self, db_engine: SQLiteDBEngine, table_name: Literal['agency', 'routes', 'stops']):
+    def _create_table_lookup(self, db_engine: SQLiteDBEngine, table_name: LookupTableName):
         log_message(f'Creating {table_name} lookup')
         path_template = self._app_config['gtfs_static_path_templates']['gtfs_table']
         output_path_s = path_template.replace('${GTFS_DAY}', self._gtfs_day)
         output_path_s = output_path_s.replace('${TABLE_NAME}', table_name)
         output_path = Path(output_path_s)
 
-        rows: List[Union[AgencyRow, RouteRow, StopRow]] = []
+        rows: List[LookupRow] = []
         with closing(db_engine.get_cursor()) as cursor:
             cursor.execute(f'SELECT ROWID, * FROM {table_name}')
             for database_row in cursor:
-                lookup_row = cast(Union[AgencyRow, RouteRow, StopRow], dict(database_row))
+                lookup_row = cast(LookupRow, dict(database_row))
                 rows.append(lookup_row)
 
         lookup: TableLookup = {
