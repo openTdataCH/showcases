@@ -65,8 +65,14 @@ class CalendarRow(TypedDict):
     day_bits: Optional[str]
 
 
-LookupRow = Union[AgencyRow, RouteRow, StopRow, FTSRouteRow, CalendarRow]
-LookupTableName = Literal['agency', 'routes', 'stops', 'fts_routes', 'calendar']
+class StationRow(TypedDict):
+    rowid: int
+    station_id: str
+    day_bits: Optional[str]
+
+
+LookupRow = Union[AgencyRow, RouteRow, StopRow, FTSRouteRow, CalendarRow, StationRow]
+LookupTableName = Literal['agency', 'routes', 'stops', 'fts_routes', 'calendar', 'stations']
 
 
 class TableLookup(TypedDict):
@@ -92,6 +98,7 @@ class GTFS_StaticLookupsController:
         self._create_table_lookup(db_engine, 'stops')
         self._create_table_lookup(db_engine, 'fts_routes')
         self._create_table_lookup(db_engine, 'calendar')
+        self._create_table_lookup(db_engine, 'stations')
 
     def _create_table_lookup(self, db_engine: SQLiteDBEngine, table_name: LookupTableName):
         log_message(f'Creating {table_name} lookup')
