@@ -16,6 +16,8 @@ def main():
     controller = GTFS_StaticLookupsController(gtfs_db_path)
     controller.create_table_lookups()
 
+    # TODO - think of the day trips lookups - how to build the cache
+
 
 if __name__ == '__main__':
     main()
