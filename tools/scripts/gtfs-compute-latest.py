@@ -27,6 +27,8 @@ def main():
     fetch_latest_resource(script_path, package_id) 
     gtfs_data_path = check_latest_data_folder(app_config, package_id)
     gtfs_db_path = _db_import(app_config, script_path, gtfs_data_path)
+
+    _db_create_lookups(script_path, gtfs_db_path)
     
     _dbs_aggregate(script_path)
 
@@ -72,9 +74,22 @@ def _db_import(app_config, script_path: Path, gtfs_data_path):
 
     return gtfs_db_path
 
+def _db_create_lookups(script_path: Path, gtfs_db_path: str):
+    print()
+    print('STEP 4 - CREATE GTFS DB lookups')
+
+    python_path = f'{script_path.parent}/../gtfs-static-db-importer/.venv/bin/python3'
+    cli_path = f'{script_path.parent}/../gtfs-static-db-importer/cli_create_db_lookups.py'
+    lookups_command = [python_path, cli_path, '--gtfs_db', gtfs_db_path]
+    lookups_command_s = shlex.join(lookups_command)
+    print()
+    print(f'$ {lookups_command_s}', flush=True)
+    print()
+    subprocess.run(lookups_command, check=True)
+
 def _dbs_aggregate(script_path):
     print(f'')
-    print(f'STEP 4 - BUILD GTFS DB catalog')
+    print(f'STEP 5 - BUILD GTFS DB catalog')
     
     python_path = f'{script_path.parent}/../gtfs-static-db-importer/.venv/bin/python3'
     cli_path = f'{script_path.parent}/../gtfs-static-db-importer/cli_aggregate_dbs.py'
