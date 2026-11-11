@@ -1,4 +1,5 @@
 import { Component, ElementRef, ViewChild } from '@angular/core';
+import { ActivatedRoute, Router } from '@angular/router';
 
 import { DataService } from './data.service';
 import { DateHelpers } from './helpers/date-helpers';
@@ -11,6 +12,11 @@ interface ReportValueLookup {
   type: ReportValueLookupType,
   caption: string
 };
+
+interface AgencyOption {
+  id: string,
+  caption: string,
+}
 
 type CellClassDB = 'odd' | 'even';
 
@@ -42,6 +48,8 @@ interface PageModel {
   mapMonthlyReports: Record<string, GTFS_RT_Static_Monthly_Report_JSON>
   monthItems: string[],
   selectedMonth: string,
+  agencyOptions: AgencyOption[],
+  selectedAgencyId: string,
   hourlyReportCells: ReportCell[][],
   
   selectedReportCell: ReportCell | null,
@@ -111,18 +119,20 @@ export class HomeComponent {
 
   @ViewChild('scrollContainer') scrollContainer!: ElementRef;
 
-  constructor(private dataService: DataService) {
+  constructor(private dataService: DataService, private route: ActivatedRoute, private router: Router) {
     this.model = {
       mapMonthlyReports: {},
       monthItems: monthItems,
       selectedMonth: monthItems[0],
+      agencyOptions: [],
+      selectedAgencyId: '',
       hourlyReportCells: [],
       selectedReportCell: null,
       dayCells: [],
       hourCells: [],
       reportValueLookups: reportValueLookups,
       selectedReportValueLookup: reportValueLookups[0],
-      appVersion: '20260915.1',
+      appVersion: '20261104.1',
       showAllHours: false,
       reportLastUpdateF: 'n/a',
       selectedReportMapPrevKeys: {},
@@ -132,11 +142,33 @@ export class HomeComponent {
 
   async ngOnInit(): Promise<void> {
     await this.fetchAndUpdateReport();
+    this.applyAgencyQueryParameter();
     
     // HACK setTimeout with 0, otherwise doesnt scroll, the scroll scrollContainer is not ready
     setTimeout(() => {
       this.updateSelectionByDayHr();
     }, 0);
+  }
+
+  private applyAgencyQueryParameter() {
+    const agencyParameter = this.route.snapshot.queryParamMap.get('agency');
+    if (agencyParameter === null) {
+      return;
+    }
+
+    let agencyId = agencyParameter.trim();
+    const organisation = this.dataService.businessOrganisationsController.mapSboid[agencyId];
+    if (organisation !== undefined) {
+      agencyId = organisation.organisationNumber;
+    }
+
+    const agencyOption = this.model.agencyOptions.find(option => option.id === agencyId);
+    if (agencyOption === undefined) {
+      return;
+    }
+
+    this.model.selectedAgencyId = agencyId;
+    this.updateReportModel();
   }
 
   private updateHourCells() {
@@ -184,7 +216,45 @@ export class HomeComponent {
     const currentMonthReport = await this.dataService.getMonthlyReport(this.model.selectedMonth);
     this.model.mapMonthlyReports[this.model.selectedMonth] = currentMonthReport;
 
+    this.updateAgencyOptions();
     this.updateReportModel();
+  }
+
+  private updateAgencyOptions() {
+    const mapAgencyIds: Record<string, boolean> = {};
+    for (const monthlyReport of Object.values(this.model.mapMonthlyReports)) {
+      const reportDays = monthlyReport.gtfs_rt_active_by_agency ?? {};
+      for (const dayReports of Object.values(reportDays)) {
+        for (const hourAgencies of Object.values(dayReports)) {
+          for (const agencyId of Object.keys(hourAgencies)) {
+            mapAgencyIds[agencyId] = true;
+          }
+        }
+      }
+    }
+
+    const agencyIds = Object.keys(mapAgencyIds);
+
+    const agencyOptions: AgencyOption[] = [];
+    const mapOrganisations = this.dataService.businessOrganisationsController.mapOrganisationNumber;
+    for (const agencyId of agencyIds) {
+      let caption = agencyId;
+      const organisation = mapOrganisations[agencyId];
+      if (organisation !== undefined) {
+        caption = organisation.abbreviationDe + ' (' + organisation.organisationNumber + ')' + ' · ' + organisation.descriptionDe;
+      }
+      agencyOptions.push({ id: agencyId, caption: caption });
+    }
+
+    agencyOptions.sort((a, b) => {
+      const comparison = a.caption.localeCompare(b.caption, 'de-CH', { sensitivity: 'base' });
+      return comparison;
+    });
+
+    this.model.agencyOptions = agencyOptions;
+    if (!(this.model.selectedAgencyId in mapAgencyIds)) {
+      this.model.selectedAgencyId = '';
+    }
   }
 
   public async onMonthSelectChange() {
@@ -198,6 +268,23 @@ export class HomeComponent {
 
   public onReportValueTypeChange() {
     this.updateReportModel();
+  }
+
+  public async onAgencySelectChange(): Promise<void> {
+    this.updateReportModel();
+
+    let agencyParameter: string | null = null;
+    if (this.model.selectedAgencyId !== '') {
+      agencyParameter = this.model.selectedAgencyId;
+    }
+
+    await this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: { agency: agencyParameter },
+      queryParamsHandling: 'merge',
+      preserveFragment: true,
+      replaceUrl: true,
+    });
   }
 
   private updateReportModel() {
@@ -301,9 +388,22 @@ export class HomeComponent {
               }
             } else {
               const reportAny = reportHR as any;
-              const reportValue = reportAny[this.model.selectedReportValueLookup.type] ?? null;
+              const valueType = this.model.selectedReportValueLookup.type;
+              let reportValue = reportAny[valueType] ?? null;
+              if (this.model.selectedAgencyId !== '') {
+                if (valueType === 'total_active_rows_no') {
+                  reportValue = report.gtfs_rt_active_by_agency?.[dayF]?.[hrMinF]?.[this.model.selectedAgencyId] ?? null;
+                } else if (valueType === 'total_rows_no') {
+                  reportValue = report.gtfs_rt_by_agency?.[dayF]?.[hrMinF]?.[this.model.selectedAgencyId] ?? null;
+                }
+              }
               if (reportValue === null) {
-                reportCell.cellValue = 'n/a'
+                reportCell.cellValue = 'n/a';
+                if (this.model.selectedAgencyId !== '') {
+                  if (valueType === 'total_active_rows_no' || valueType === 'total_rows_no') {
+                    reportCell.cellValue = '';
+                  }
+                }
               } else {
                 reportCell.cellValue = reportValue.toLocaleString('de-CH');
               }

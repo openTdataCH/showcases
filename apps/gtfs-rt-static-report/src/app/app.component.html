@@ -1,1 +1,2 @@
-<router-outlet></router-outlet>
+<p *ngIf="!isDataLoaded" role="status">{{ loadingMessage }}</p>
+<router-outlet *ngIf="isDataLoaded"></router-outlet>

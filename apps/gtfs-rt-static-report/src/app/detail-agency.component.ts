@@ -351,6 +351,11 @@ export class DetailAgencyComponent implements OnInit {
     });
   }
 
+  public computeAgencySnapshotURL(agencyId: string): string {
+    const url = 'https://gtfs-rt.ch/?gtfs-rt-snapshot=' + encodeURIComponent(this.model.keyA) + '&agency=' + encodeURIComponent(agencyId);
+    return url;
+  }
+
   public onCompareValueChange() {
     this.updatePageModel();
   }

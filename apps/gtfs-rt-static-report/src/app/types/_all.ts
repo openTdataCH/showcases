@@ -55,4 +55,7 @@ export interface GTFS_RT_Static_Monthly_Report_JSON {
   comments: string
   report_days: Record<string, Record<string, GTFS_RT_Static_Report_Metadata_JSON>>
   compare_days: Record<string, Record<string, GTFS_RT_Static_Report_Compare_JSON>>
+  gtfs_rt_by_agency: Record<string, Record<string, Record<string, number>>>
+  gtfs_rt_active_by_agency: Record<string, Record<string, Record<string, number>>>
+  trips_active_by_agency: Record<string, Record<string, Record<string, number>>>
 };

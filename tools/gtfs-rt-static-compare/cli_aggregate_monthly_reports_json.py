@@ -117,7 +117,7 @@ def _compute_compare(app_config: Any, report_key: str, map_hr_report: dict[str, 
     
     return compare_info
 
-def _fetch_map_reports(app_config: Any, report_filter_ym: str) -> dict[str, GTFS_RT_Static_Report_Metadata]:
+def _fetch_map_reports(app_config: Any, report_filter_ym: str) -> dict[str, GTFS_RT_Static_Report]:
     report_template_path: str = app_config['resource_paths']['gtfs_rt_static_report']
     report_base_path = Path(report_template_path.split('[YEAR]/[MONTH]/[DAY]')[0])
     
@@ -169,7 +169,7 @@ def _fetch_map_reports(app_config: Any, report_filter_ym: str) -> dict[str, GTFS
     report_file_paths.sort()
     log_message(f'... found {len(report_file_paths)} files')
     
-    map_reports: dict[str, GTFS_RT_Static_Report_Metadata] = {}
+    map_reports: dict[str, GTFS_RT_Static_Report] = {}
     for report_path in report_file_paths:
         file_matches = re.match(gtfs_rt_static_report_file_regexp, report_path.name)
         if file_matches is None:
@@ -192,15 +192,18 @@ def _fetch_map_reports(app_config: Any, report_filter_ym: str) -> dict[str, GTFS
         
         report_key = f'{report_year_f}-{report_month_f}-{report_day_f}-{report_hour_f}'
         
-        map_reports[report_key] = report.metadata
+        map_reports[report_key] = report
     # loop report_file_paths
     
     return map_reports
 
-def _compute_and_save_monthly_report(app_config: Any, report_filter_ym: str, map_reports: dict[str, GTFS_RT_Static_Report_Metadata], map_compare: dict[str, GTFS_RT_Static_Report_Compare_Info]): 
+def _compute_and_save_monthly_report(app_config: Any, report_filter_ym: str, map_reports: dict[str, GTFS_RT_Static_Report], map_compare: dict[str, GTFS_RT_Static_Report_Compare_Info]): 
     #                   YYYY-MM  >    DD    >   HH > GTFS_RT_Static_Report_Metadata
     map_reports_by_hr: dict[str, dict[str, dict[str, GTFS_RT_Static_Report_Metadata]]] = {}
     map_compare_by_hr: dict[str, dict[str, dict[str, GTFS_RT_Static_Report_Compare_Info]]] = {}
+    map_gtfs_rt_by_agency: dict[str, dict[str, dict[str, dict[str, int]]]] = {}
+    map_gtfs_rt_active_by_agency: dict[str, dict[str, dict[str, dict[str, int]]]] = {}
+    map_trips_active_by_agency: dict[str, dict[str, dict[str, dict[str, int]]]] = {}
     for report_key, report in map_reports.items():
         # 2025-07-01-00
         report_key_parts = report_key.split('-')
@@ -215,12 +218,21 @@ def _compute_and_save_monthly_report(app_config: Any, report_filter_ym: str, map
         if report_ym not in map_reports_by_hr:
             map_reports_by_hr[report_ym] = {}
             map_compare_by_hr[report_ym] = {}
+            map_gtfs_rt_by_agency[report_ym] = {}
+            map_gtfs_rt_active_by_agency[report_ym] = {}
+            map_trips_active_by_agency[report_ym] = {}
         
         if report_day_f not in map_reports_by_hr[report_ym]:
             map_reports_by_hr[report_ym][report_day_f] = {}
             map_compare_by_hr[report_ym][report_day_f] = {}
+            map_gtfs_rt_by_agency[report_ym][report_day_f] = {}
+            map_gtfs_rt_active_by_agency[report_ym][report_day_f] = {}
+            map_trips_active_by_agency[report_ym][report_day_f] = {}
             
-        map_reports_by_hr[report_ym][report_day_f][report_hour_f] = report
+        map_reports_by_hr[report_ym][report_day_f][report_hour_f] = report.metadata
+        map_gtfs_rt_by_agency[report_ym][report_day_f][report_hour_f] = report.gtfs_rt_by_agency
+        map_gtfs_rt_active_by_agency[report_ym][report_day_f][report_hour_f] = report.gtfs_rt_active_by_agency
+        map_trips_active_by_agency[report_ym][report_day_f][report_hour_f] = report.gtfs_trips_active_data['trips_active_by_agency']
         if report_key in map_compare:
             map_compare_by_hr[report_ym][report_day_f][report_hour_f] = map_compare[report_key]
     # loop reports
@@ -238,6 +250,9 @@ def _compute_and_save_monthly_report(app_config: Any, report_filter_ym: str, map
             comments=report_comments,
             report_days=report_data,
             compare_days=report_compare_data,
+            gtfs_rt_by_agency=map_gtfs_rt_by_agency[report_ym],
+            gtfs_rt_active_by_agency=map_gtfs_rt_active_by_agency[report_ym],
+            trips_active_by_agency=map_trips_active_by_agency[report_ym],
         )
         monthly_report_json = monthly_report.as_json()
         
@@ -317,10 +332,14 @@ def main():
     
     map_reports = _fetch_map_reports(app_config, report_filter_ym)
     log_message(f'... done parsing {len(map_reports.keys())} reports')
+
+    map_report_metadata: dict[str, GTFS_RT_Static_Report_Metadata] = {}
+    for report_key, report in map_reports.items():
+        map_report_metadata[report_key] = report.metadata
     
     map_compare: dict[str, GTFS_RT_Static_Report_Compare_Info] = {}
     for report_key, _ in map_reports.items():
-        report_compare = _compute_compare(app_config, report_key, map_reports, map_compare)
+        report_compare = _compute_compare(app_config, report_key, map_report_metadata, map_compare)
         map_compare[report_key] = report_compare
     # loop compare
     log_message('... finished compare files')
@@ -331,7 +350,7 @@ def main():
     print(header_separator_s)
     
     if user_check_errors:
-        _analyse_last_report(map_reports, map_compare)
+        _analyse_last_report(map_report_metadata, map_compare)
 
 if __name__ == "__main__":
     main()
