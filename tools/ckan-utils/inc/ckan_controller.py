@@ -27,7 +27,7 @@ class CKAN_Controller:
                      resource_title: Optional[str], 
                      has_partial_match: bool = False,
                      overwrite: bool = False, 
-                     output_dir: Optional[Path] = None
+                     output_dir_path: Optional[Path] = None
     ):
         log_message(f'CKAN - FETCH PACKAGE {package_id}')
         log_message(f'  PACKAGE_ID      : {package_id}')
@@ -36,12 +36,12 @@ class CKAN_Controller:
         ds_resource = self._fetch_package_resource(package_id, resource_title, has_partial_match)
         ds_res_filename = ds_resource.url.split('/')[-1]
 
-        if output_dir is None:
+        if output_dir_path is None:
             output_dir_s: str = self.app_config['resource_paths']['package_base_path']
             output_dir_s = output_dir_s.replace('[PACKAGE_ID]', package_id)
-            output_dir = Path(output_dir_s)
+            output_dir_path = Path(output_dir_s)
         
-        ds_resource_path = output_dir / ds_res_filename
+        ds_resource_path = output_dir_path / ds_res_filename
         if overwrite or (not os.path.isfile(ds_resource_path)):
             ds_url = ds_resource.url
             
@@ -56,7 +56,7 @@ class CKAN_Controller:
         ds_res_extension = Path(ds_res_filename.lower()).suffix
         if ds_res_extension == '.zip':
             ds_zip_folder = ds_res_filename[0:-4]
-            ds_zip_folder_path = output_dir / ds_zip_folder
+            ds_zip_folder_path = output_dir_path / ds_zip_folder
             if overwrite or (not os.path.isdir(ds_zip_folder_path)):
                 unzip_file(ds_resource_path, ds_zip_folder_path)
                 

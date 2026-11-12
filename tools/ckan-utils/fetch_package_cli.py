@@ -37,7 +37,7 @@ def main():
         resource_title=resource_title,
         has_partial_match=has_partial_match,
         overwrite=overwrite,
-        output_dir=args.output_dir,
+        output_dir_path=args.output_dir_path,
     )
 
 if __name__ == "__main__":
