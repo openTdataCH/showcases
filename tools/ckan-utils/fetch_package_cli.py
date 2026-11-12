@@ -9,12 +9,12 @@ def main():
     script_path = Path(os.path.realpath(__file__))
     app_config = load_convenience_config(script_path)
 
-    usage_help_s = 'fetch_latest_package_cli.py [--package_id package_id] [--resource_title RESOURCE_TITLE] [--output_dir OUTPUT_DIR]'
+    usage_help_s = 'fetch_latest_package_cli.py [--package_id package_id] [--resource_title RESOURCE_TITLE] [--output OUTPUT_DIR]'
 
     parser = argparse.ArgumentParser()
     parser.add_argument('--package_id', '--package_id')
     parser.add_argument('--resource_title', '--resource_title')
-    parser.add_argument('--output_dir', type=Path, help='Directory for downloaded resources and extracted contents')
+    parser.add_argument('--output', dest='output_dir_path', type=Path, help='Directory for downloaded resources and extracted contents')
     parser.add_argument('--partial_match', '--partial_match', action='store_true')
     parser.add_argument('--overwrite', '--overwrite', action='store_true')
     args = parser.parse_args()
