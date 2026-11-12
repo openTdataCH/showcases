@@ -37,13 +37,11 @@ class CKAN_Controller:
         ds_res_filename = ds_resource.url.split('/')[-1]
 
         if output_dir is None:
-            package_base_path_s: str = self.app_config['resource_paths']['package_base_path']
-            package_base_path_s = package_base_path_s.replace('[PACKAGE_ID]', package_id)
-            package_base_path = Path(package_base_path_s)
-        else:
-            package_base_path = output_dir
+            output_dir_s: str = self.app_config['resource_paths']['package_base_path']
+            output_dir_s = output_dir_s.replace('[PACKAGE_ID]', package_id)
+            output_dir = Path(output_dir_s)
         
-        ds_resource_path = Path(f'{package_base_path}/{ds_res_filename}')
+        ds_resource_path = output_dir / ds_res_filename
         if overwrite or (not os.path.isfile(ds_resource_path)):
             ds_url = ds_resource.url
             
@@ -58,7 +56,7 @@ class CKAN_Controller:
         ds_res_extension = Path(ds_res_filename.lower()).suffix
         if ds_res_extension == '.zip':
             ds_zip_folder = ds_res_filename[0:-4]
-            ds_zip_folder_path = Path(f'{package_base_path}/{ds_zip_folder}')
+            ds_zip_folder_path = output_dir / ds_zip_folder
             if overwrite or (not os.path.isdir(ds_zip_folder_path)):
                 unzip_file(ds_resource_path, ds_zip_folder_path)
                 
