@@ -105,10 +105,10 @@ class CKAN_Controller:
         print(row_delimiter_s)
         print(error_message)
         print(row_delimiter_s)
-        print(f'Available resources:                        - Last modified')
+        print(f'Available first 10/{len(ckan_data.result.resources)} resources:           - Last modified')
         print(row_delimiter_s)
 
-        for ds_resource in ckan_data.result.resources:
+        for ds_resource in ckan_data.result.resources[0:10]:
             resource_filename: str = ds_resource.filename
             
             last_modified_day = ds_resource.modified_s[0:10]
