@@ -99,7 +99,7 @@ class CKAN_Controller:
             
         row_delimiter_s = '='*70
         
-        error_message = f'ERROR - cant find resource with title {filter_resource_title} with partial match={has_partial_match}'
+        error_message = f'ERROR - cant find resource with title "{filter_resource_title}" with partial match={has_partial_match}'
         
         print()
         print(row_delimiter_s)
