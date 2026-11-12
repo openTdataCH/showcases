@@ -48,11 +48,10 @@ def _main():
         parser.error(f'--gtfs-src must be an existing folder: {args.gtfs_src}')
 
     destination_parent = args.gtfs_dst.parent
-    if not destination_parent.is_dir():
-        parser.error(f'--gtfs-dst parent must be an existing folder: {destination_parent}')
+    destination_parent.mkdir(parents=True, exist_ok=True)
 
     if not os.access(destination_parent, os.W_OK | os.X_OK):
-        parser.error(f'--gtfs-dst parent must be writable: {destination_parent}')
+        raise PermissionError(f'--gtfs-dst parent must be writable: {destination_parent}')
 
     if args.date_from is None and args.date_to is None:
         parser.error('At least one of --from or --to is required')
