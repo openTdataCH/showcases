@@ -9,8 +9,6 @@ def main():
     script_path = Path(os.path.realpath(__file__))
     app_config = load_convenience_config(script_path)
 
-    usage_help_s = 'fetch_latest_package_cli.py [--package_id package_id] [--resource_title RESOURCE_TITLE] [--output OUTPUT_DIR]'
-
     parser = argparse.ArgumentParser()
     parser.add_argument('--package_id', '--package_id')
     parser.add_argument('--resource_title', '--resource_title')
@@ -22,10 +20,7 @@ def main():
     package_id = args.package_id
 
     if not package_id:
-        print('Missing --package_id param')
-        print(usage_help_s)
-
-        sys.exit(1)
+        raise ValueError('Missing --package_id param')
 
     resource_title = args.resource_title or None
     has_partial_match = args.partial_match
