@@ -1,0 +1,4 @@
+gtfs_static_path_templates:
+  gtfs_table: "[APP_PATH]/data/gtfs-static-lookups/gtfs_${GTFS_DAY}/tables/${TABLE_NAME}.json"
+  gtfs_day_trips_rt: "[APP_PATH]/data/gtfs-static-lookups/gtfs_${GTFS_DAY}/day_trips/${DAY}/rt.json"
+  gtfs_day_trips_no_rt: "[APP_PATH]/data/gtfs-static-lookups/gtfs_${GTFS_DAY}/day_trips/${DAY}/no_rt.json"

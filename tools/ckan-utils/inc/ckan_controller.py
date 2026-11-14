@@ -22,7 +22,13 @@ class CKAN_Controller:
         dotenv_path = app_config['resource_paths']['dotenv_path']
         load_env_vars(dotenv_path)
 
-    def fetch_latest(self, package_id: str, resource_title: Optional[str], has_partial_match: bool = False, overwrite: bool = False):
+    def fetch_latest(self, 
+                     package_id: str, 
+                     resource_title: Optional[str], 
+                     has_partial_match: bool = False,
+                     overwrite: bool = False, 
+                     output_dir_path: Optional[Path] = None
+    ):
         log_message(f'CKAN - FETCH PACKAGE {package_id}')
         log_message(f'  PACKAGE_ID      : {package_id}')
         log_message(f'  RESOURCE_TITLE  : {resource_title}')
@@ -30,11 +36,12 @@ class CKAN_Controller:
         ds_resource = self._fetch_package_resource(package_id, resource_title, has_partial_match)
         ds_res_filename = ds_resource.url.split('/')[-1]
 
-        package_base_path_s: str = self.app_config['resource_paths']['package_base_path']
-        package_base_path_s = package_base_path_s.replace('[PACKAGE_ID]', package_id)
-        package_base_path = Path(package_base_path_s)
+        if output_dir_path is None:
+            output_dir_s: str = self.app_config['resource_paths']['package_base_path']
+            output_dir_s = output_dir_s.replace('[PACKAGE_ID]', package_id)
+            output_dir_path = Path(output_dir_s)
         
-        ds_resource_path = Path(f'{package_base_path}/{ds_res_filename}')
+        ds_resource_path = output_dir_path / ds_res_filename
         if overwrite or (not os.path.isfile(ds_resource_path)):
             ds_url = ds_resource.url
             
@@ -49,7 +56,7 @@ class CKAN_Controller:
         ds_res_extension = Path(ds_res_filename.lower()).suffix
         if ds_res_extension == '.zip':
             ds_zip_folder = ds_res_filename[0:-4]
-            ds_zip_folder_path = Path(f'{package_base_path}/{ds_zip_folder}')
+            ds_zip_folder_path = output_dir_path / ds_zip_folder
             if overwrite or (not os.path.isdir(ds_zip_folder_path)):
                 unzip_file(ds_resource_path, ds_zip_folder_path)
                 
@@ -92,16 +99,16 @@ class CKAN_Controller:
             
         row_delimiter_s = '='*70
         
-        error_message = f'ERROR - cant find resource with title {filter_resource_title} with partial match={has_partial_match}'
+        error_message = f'ERROR - cant find resource with title "{filter_resource_title}" with partial match={has_partial_match}'
         
         print()
         print(row_delimiter_s)
         print(error_message)
         print(row_delimiter_s)
-        print(f'Available resources:                        - Last modified')
+        print(f'Available first 10/{len(ckan_data.result.resources)} resources:           - Last modified')
         print(row_delimiter_s)
 
-        for ds_resource in ckan_data.result.resources:
+        for ds_resource in ckan_data.result.resources[0:10]:
             resource_filename: str = ds_resource.filename
             
             last_modified_day = ds_resource.modified_s[0:10]
